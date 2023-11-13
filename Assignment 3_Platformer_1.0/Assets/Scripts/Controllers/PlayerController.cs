@@ -81,7 +81,7 @@ public class PlayerController : MonoBehaviour
 
             Vector2 leftoverStep = step - newStep;
 
-            //Vector2 slideStep = << HERE
+            //Vector2 slideStep = << HERE (perp, swap x & y )
 
             velocity = newStep / Time.fixedDeltaTime;
         }

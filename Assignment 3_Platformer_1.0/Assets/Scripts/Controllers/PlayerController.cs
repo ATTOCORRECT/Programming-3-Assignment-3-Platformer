@@ -38,16 +38,22 @@ public class PlayerController : MonoBehaviour
 
     public bool CanJump()
     {
-        float distanceAboveGround = (10f / 16f);
-        bool grounded = Physics2D.Raycast(transform.position, Vector2.down, distanceAboveGround, LayerMask.GetMask("Ground"));
-        return grounded;
+        for (int i = 0; i < 2; i++)
+        {
+            RaycastHit2D hit = Physics2D.Raycast(rigidbody.position + corners[i], Vector2.down, (2f / 16f), LayerMask.GetMask("Ground"));
+            if (hit) { return true; }
+        }
+        return false;
     }
 
     public bool IsGrounded()
     {
-        float distanceAboveGround = (10f / 16f);
-        bool grounded = Physics2D.Raycast(transform.position, Vector2.down, distanceAboveGround, LayerMask.GetMask("Ground"));
-        return grounded;
+        for (int i = 0; i < 2; i++)
+        {
+            RaycastHit2D hit = Physics2D.Raycast(rigidbody.position + corners[i], Vector2.down, (1f / 16f), LayerMask.GetMask("Ground"));
+            if (hit) { return true; }
+        }
+        return false;
     }
 
     public FacingDirection GetFacingDirection()
@@ -59,7 +65,6 @@ public class PlayerController : MonoBehaviour
     {
         PlayerInput();
         UpdateDirection();
-
     }
 
     private void FixedUpdate()
@@ -71,19 +76,53 @@ public class PlayerController : MonoBehaviour
         Debug.DrawLine(rigidbody.position + corners[1], rigidbody.position + corners[2]);
         Debug.DrawLine(rigidbody.position + corners[2], rigidbody.position + corners[3]);
         Debug.DrawLine(rigidbody.position + corners[3], rigidbody.position + corners[0]);
+
+        Debug.Log(CanJump());
+
+        Debug.Log(velocity.x / Time.fixedDeltaTime);
     }
 
     void PlayerMovement()
     {
-        
+        rigidbody.position += velocity;
 
+        velocity += Friction();
 
-        //Gravity();
         velocity += WalkVelocity();
+        velocity += JumpVelocity();
+
         //Collisions
         velocity = CollideAndSlide(velocity, rigidbody.position, 0, false);
-        velocity += CollideAndSlide(Vector2.down * Time.fixedDeltaTime * 0.1f, rigidbody.position, 0, true);
-        rigidbody.position += velocity ;
+        velocity += CollideAndSlide(Vector2.down * Time.fixedDeltaTime * 0.2f, rigidbody.position, 0, true); //gravity step
+    }
+
+    Vector2 JumpVelocity()
+    {
+        Vector2 jumpVelocity = Vector2.zero;
+
+        if (jump && CanJump()) { jumpVelocity += Vector2.up * 5; }
+
+        return jumpVelocity * Time.fixedDeltaTime;
+    }
+
+    Vector2 Friction()
+    {
+        Vector2 frictionVelocity = Vector2.zero;
+
+        Vector2[] directions = { Vector2.left, Vector2.down, Vector2.right, Vector2.up};
+
+        for (int i = 0; i < 4; i++) { for (int j = 0; j < 2; j++)
+        {
+                RaycastHit2D hit = Physics2D.Raycast(rigidbody.position + corners[i], directions[(i + j) % 4], (1f / 16f), LayerMask.GetMask("Ground"));
+                Debug.DrawRay(rigidbody.position + corners[i], directions[(i + j) % 4] * (1f / 16f), Color.cyan);
+
+                if (hit)
+                {
+                    frictionVelocity = (hit.rigidbody.velocity - velocity) * 0.5f;
+                    return frictionVelocity;
+                }
+        }   }
+            return Vector2.zero;
     }
 
     Vector2 CollideAndSlide(Vector2 velocity, Vector2 position, int depth, bool gravityPass)
@@ -98,7 +137,7 @@ public class PlayerController : MonoBehaviour
         for (int i = 0; i < 4; i++)
         {
             RaycastHit2D hit = Physics2D.Raycast(position + corners[i], velocity.normalized, distance, LayerMask.GetMask("Ground"));
-            //Debug.DrawRay(position + corners[i], velocity, Color.white);
+            Debug.DrawRay(position + corners[i], velocity, Color.red);
 
             if (hit)
             {
@@ -125,29 +164,29 @@ public class PlayerController : MonoBehaviour
     {
         Vector2 walkVelocity = Vector2.zero;
 
-        Debug.Log(velocity.x / Time.fixedDeltaTime);
-
-        if (left  && velocity.x / Time.fixedDeltaTime > -1) { walkVelocity += Vector2.left  * 1; }
-        if (right && velocity.x / Time.fixedDeltaTime <  1) { walkVelocity += Vector2.right * 1; }
+        if (IsGrounded())
+        {
+            if (left) { walkVelocity += Vector2.left * 3; }
+            if (right) { walkVelocity += Vector2.right * 3; }
+        }
 
         return walkVelocity * Time.fixedDeltaTime;
     }
     void UpdateDirection()
     {
-        if (left)  { direction = FacingDirection.Left; }
+        if (left )  { direction = FacingDirection.Left; }
         if (right) { direction = FacingDirection.Right; }
     }
     void PlayerInput()
     {
-        up     = Input.GetKey(KeyCode.W);
-        left   = Input.GetKey(KeyCode.A);
-        down   = Input.GetKey(KeyCode.S);
-        right  = Input.GetKey(KeyCode.D);
+        up    = Input.GetKey(KeyCode.W);
+        left  = Input.GetKey(KeyCode.A);
+        down  = Input.GetKey(KeyCode.S);
+        right = Input.GetKey(KeyCode.D);
 
         jump   = Input.GetKey(KeyCode.Space);
-        crouch = Input.GetKey(KeyCode.LeftControl);
+        //crouch = Input.GetKey(KeyCode.LeftControl); // maybe no crouching?
 
-        //special = Input.GetKey(KeyCode.LeftShift);
-
+        special = Input.GetKey(KeyCode.LeftShift);
     }
 }

@@ -11,6 +11,8 @@ public class PlayerController : MonoBehaviour
     public float topSpeed;
     
     bool up, left, down, right, jump, crouch, special; //input
+    bool isJumping = false;
+
 
     Rigidbody2D rigidbody;
 
@@ -76,10 +78,6 @@ public class PlayerController : MonoBehaviour
         Debug.DrawLine(rigidbody.position + corners[1], rigidbody.position + corners[2]);
         Debug.DrawLine(rigidbody.position + corners[2], rigidbody.position + corners[3]);
         Debug.DrawLine(rigidbody.position + corners[3], rigidbody.position + corners[0]);
-
-        Debug.Log(CanJump());
-
-        Debug.Log(velocity.x / Time.fixedDeltaTime);
     }
 
     void PlayerMovement()
@@ -93,14 +91,25 @@ public class PlayerController : MonoBehaviour
 
         //Collisions
         velocity = CollideAndSlide(velocity, rigidbody.position, 0, false);
-        velocity += CollideAndSlide(Vector2.down * Time.fixedDeltaTime * 0.2f, rigidbody.position, 0, true); //gravity step
+        velocity += CollideAndSlide(Vector2.down * Time.fixedDeltaTime * 0.5f, rigidbody.position, 0, true); //gravity step
     }
 
     Vector2 JumpVelocity()
     {
         Vector2 jumpVelocity = Vector2.zero;
 
-        if (jump && CanJump()) { jumpVelocity += Vector2.up * 5; }
+        if (jump && CanJump() && !isJumping) 
+        {
+            if (!IsGrounded()) { velocity = new Vector2(velocity.x, 5); }
+            jumpVelocity += Vector2.up * 5;
+            isJumping = true;
+        }
+
+        if (isJumping)
+        {
+            jumpVelocity += Vector2.up * 0.7f;
+        }
+
 
         return jumpVelocity * Time.fixedDeltaTime;
     }
@@ -111,18 +120,16 @@ public class PlayerController : MonoBehaviour
 
         Vector2[] directions = { Vector2.left, Vector2.down, Vector2.right, Vector2.up};
 
-        for (int i = 0; i < 4; i++) { for (int j = 0; j < 2; j++)
+        for (int i = 0; i < 2; i++)
         {
-                RaycastHit2D hit = Physics2D.Raycast(rigidbody.position + corners[i], directions[(i + j) % 4], (1f / 16f), LayerMask.GetMask("Ground"));
-                Debug.DrawRay(rigidbody.position + corners[i], directions[(i + j) % 4] * (1f / 16f), Color.cyan);
-
-                if (hit)
-                {
-                    frictionVelocity = (hit.rigidbody.velocity - velocity) * 0.5f;
-                    return frictionVelocity;
-                }
-        }   }
-            return Vector2.zero;
+            RaycastHit2D hit = Physics2D.Raycast(rigidbody.position + corners[i], Vector2.down, (1f / 16f), LayerMask.GetMask("Ground"));
+            if (hit)
+            {
+                frictionVelocity = (hit.rigidbody.velocity - velocity) * 0.5f;
+                return frictionVelocity;
+            }
+        } 
+        return Vector2.zero;
     }
 
     Vector2 CollideAndSlide(Vector2 velocity, Vector2 position, int depth, bool gravityPass)
@@ -143,15 +150,15 @@ public class PlayerController : MonoBehaviour
             {
                 Vector2 snapToSurface = velocity.normalized * (hit.distance - skinWidth);
                 Vector2 leftover = velocity - snapToSurface;
-
-/*                if(snapToSurface.magnitude <= skinWidth)
+               
+                if(snapToSurface.magnitude <= skinWidth)
                 {
                     snapToSurface = Vector2.zero;
-                }*/
+                }
 
-                float mag = leftover.magnitude;
-                leftover = Vector3.ProjectOnPlane(leftover, hit.normal).normalized;
-                leftover *= mag;
+                //float mag = leftover.magnitude;
+                leftover = Vector3.ProjectOnPlane(leftover, hit.normal);//.normalized;
+                //leftover *= mag;
 
                 return snapToSurface + CollideAndSlide(leftover, position + snapToSurface, depth + 1, gravityPass);
             }

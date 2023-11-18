@@ -9,50 +9,42 @@ public class PlayerController : MonoBehaviour
     public FacingDirection direction;
 
     public float topSpeed;
-    
+
+    public BoxCollider2D collisionBox;
+
     bool up, left, down, right, jump, crouch, special; //input
-    bool isJumping = false;
 
+    float pixel = (1f / 16f);
 
-    Rigidbody2D rigidbody;
+    Vector2 position, velocity;
 
-    Vector2[] corners = { new Vector2(-4f / 16f, -8f / 16f),
-                          new Vector2( 4f / 16f, -8f / 16f),
-                          new Vector2( 4f / 16f,  4f / 16f),
-                          new Vector2(-4f / 16f,  4f / 16f)};
-
-    int maxBounces = 5;
-    float skinWidth = 0.01f;
-
-    Vector2 velocity;
     private void Start()
     {
-        rigidbody = GetComponent<Rigidbody2D>();
-
-        velocity = Vector2.left * Time.fixedDeltaTime;
+        velocity = Vector2.zero;
+        position = transform.position;
     }
-
 
     public bool IsWalking()
     {
-        return false;
-    }
-
-    public bool CanJump()
-    {
-        for (int i = 0; i < 2; i++)
+        if (IsGrounded() && (left || right) && Mathf.Abs(velocity.x) > 0)
         {
-            RaycastHit2D hit = Physics2D.Raycast(rigidbody.position + corners[i], Vector2.down, (2f / 16f), LayerMask.GetMask("Ground"));
-            if (hit) { return true; }
+            return true;
         }
-        return false;
+        else
+        {
+            return false;
+        }
     }
 
     public bool IsGrounded()
     {
-        for (int i = 0; i < 2; i++)
+        int rays = 3;
+        for (int i = 0; i < rays; i++)
         {
-            RaycastHit2D hit = Physics2D.Raycast(rigidbody.position + corners[i], Vector2.down, (1f / 16f), LayerMask.GetMask("Ground"));
+            Vector2 rayOrigin = position + collisionBox.offset + (Mathf.Lerp(collisionBox.size.x - pixel, -collisionBox.size.x + pixel, i / (float)(rays - 1)) * Vector2.right / 2);
+
+            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.down, collisionBox.size.y / 2, LayerMask.GetMask("Ground"));
+            Debug.DrawRay(rayOrigin, Vector2.down * (collisionBox.size.y / 2 + pixel), Color.cyan);
             if (hit) { return true; }
         }
         return false;
@@ -71,118 +63,101 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        PlayerMovement();
+        Physics();
 
-        //collision box debug
-        Debug.DrawLine(rigidbody.position + corners[0], rigidbody.position + corners[1]);
-        Debug.DrawLine(rigidbody.position + corners[1], rigidbody.position + corners[2]);
-        Debug.DrawLine(rigidbody.position + corners[2], rigidbody.position + corners[3]);
-        Debug.DrawLine(rigidbody.position + corners[3], rigidbody.position + corners[0]);
+        Debug.Log("Velocity " + velocity);
+
+        Debug.Log("is Grounded " + IsGrounded());
+
+        Debug.Log("is Walking " + IsWalking());
     }
 
-    void PlayerMovement()
+    void Physics()
     {
-        rigidbody.position += velocity;
+        position += velocity;
+        transform.position = position;
 
-        velocity += Friction();
+        Walk();
+        GroundFriction();
+        velocity += Vector2.down * 0.01f;
 
-        velocity += WalkVelocity();
-        velocity += JumpVelocity();
-
-        //Collisions
-        velocity = CollideAndSlide(velocity, rigidbody.position, 0, false);
-        velocity += CollideAndSlide(Vector2.down * Time.fixedDeltaTime * 0.5f, rigidbody.position, 0, true); //gravity step
+        CollideH();
+        CollideV();
     }
 
-    Vector2 JumpVelocity()
+    void CollideH()
     {
-        Vector2 jumpVelocity = Vector2.zero;
-
-        if (jump && CanJump() && !isJumping) 
+        int rays = 3;
+        for (int i = 0; i < rays; i++)
         {
-            if (!IsGrounded()) { velocity = new Vector2(velocity.x, 5); }
-            jumpVelocity += Vector2.up * 5;
-            isJumping = true;
-        }
+            Vector2 rayOrigin = position + collisionBox.offset + (Mathf.Lerp(collisionBox.size.y - pixel, -collisionBox.size.y + pixel, i / (float)(rays - 1)) * Vector2.up / 2);
+            Vector2 rayDirection = velocity.x * Vector2.right;
+            float offset = collisionBox.size.x / 2 * Mathf.Sign(Mathf.Abs(velocity.x));
+            float rayDistance = Mathf.Abs(velocity.x) + offset;
 
-        if (isJumping)
-        {
-            jumpVelocity += Vector2.up * 0.7f;
-        }
-
-
-        return jumpVelocity * Time.fixedDeltaTime;
-    }
-
-    Vector2 Friction()
-    {
-        Vector2 frictionVelocity = Vector2.zero;
-
-        Vector2[] directions = { Vector2.left, Vector2.down, Vector2.right, Vector2.up};
-
-        for (int i = 0; i < 2; i++)
-        {
-            RaycastHit2D hit = Physics2D.Raycast(rigidbody.position + corners[i], Vector2.down, (1f / 16f), LayerMask.GetMask("Ground"));
-            if (hit)
-            {
-                frictionVelocity = (hit.rigidbody.velocity - velocity) * 0.5f;
-                return frictionVelocity;
-            }
-        } 
-        return Vector2.zero;
-    }
-
-    Vector2 CollideAndSlide(Vector2 velocity, Vector2 position, int depth, bool gravityPass)
-    {
-        if(depth >= maxBounces)
-        {
-            return Vector2.zero;
-        }
-
-        float distance = velocity.magnitude + skinWidth;
-
-        for (int i = 0; i < 4; i++)
-        {
-            RaycastHit2D hit = Physics2D.Raycast(position + corners[i], velocity.normalized, distance, LayerMask.GetMask("Ground"));
-            Debug.DrawRay(position + corners[i], velocity, Color.red);
+            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, rayDirection, rayDistance, LayerMask.GetMask("Ground"));
+            Debug.DrawRay(rayOrigin, rayDirection.normalized * rayDistance, Color.red);
 
             if (hit)
             {
-                Vector2 snapToSurface = velocity.normalized * (hit.distance - skinWidth);
-                Vector2 leftover = velocity - snapToSurface;
-               
-                if(snapToSurface.magnitude <= skinWidth)
-                {
-                    snapToSurface = Vector2.zero;
-                }
-
-                //float mag = leftover.magnitude;
-                leftover = Vector3.ProjectOnPlane(leftover, hit.normal);//.normalized;
-                //leftover *= mag;
-
-                return snapToSurface + CollideAndSlide(leftover, position + snapToSurface, depth + 1, gravityPass);
+                velocity = new Vector2(Mathf.Clamp(velocity.x, -hit.distance + offset, hit.distance - offset), velocity.y);
+                return;
             }
         }
-
-        return velocity;
     }
 
-    Vector2 WalkVelocity()
+    void CollideV()
     {
-        Vector2 walkVelocity = Vector2.zero;
+        int rays = 3;
+        for (int i = 0; i < rays; i++)
+        {
+            Vector2 rayOrigin = position + collisionBox.offset + (Mathf.Lerp(collisionBox.size.x - pixel, -collisionBox.size.x + pixel, i / (float)(rays - 1)) * Vector2.right / 2);
+            Vector2 rayDirection = velocity.y * Vector2.up;
+            float offset = collisionBox.size.y / 2 * Mathf.Sign(Mathf.Abs(velocity.y));
+            float rayDistance = Mathf.Abs(velocity.y) + offset;
 
+            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, rayDirection, rayDistance, LayerMask.GetMask("Ground"));
+            Debug.DrawRay(rayOrigin, rayDirection.normalized * rayDistance, Color.red);
+
+            if (hit)
+            {
+                velocity = new Vector2(velocity.x, Mathf.Clamp(velocity.y, -hit.distance + offset, hit.distance - offset));
+                return;
+            }
+        }
+    }
+
+    void Walk()
+    {
         if (IsGrounded())
         {
-            if (left) { walkVelocity += Vector2.left * 3; }
-            if (right) { walkVelocity += Vector2.right * 3; }
-        }
+            if (left)
+            {
+                velocity += Mathf.Clamp(velocity.x + topSpeed, 0, topSpeed * 0.1f) * Vector2.left;
+            }
 
-        return walkVelocity * Time.fixedDeltaTime;
+            if (right)
+            {
+                velocity += Mathf.Clamp(-velocity.x + topSpeed, 0, topSpeed * 0.1f) * Vector2.right;
+            }
+        }
     }
+
+    void GroundFriction()
+    {
+        if (!(left != right) && IsGrounded())
+        {
+            velocity *= 0.75f;
+        }
+    }
+
     void UpdateDirection()
     {
-        if (left )  { direction = FacingDirection.Left; }
-        if (right) { direction = FacingDirection.Right; }
+        if (!(left && right))
+        {
+            if (left) { direction = FacingDirection.Left; }
+            if (right) { direction = FacingDirection.Right; }
+        }
     }
     void PlayerInput()
     {

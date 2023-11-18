@@ -135,7 +135,6 @@ GameObject:
   - component: {fileID: 638310301}
   - component: {fileID: 638310300}
   - component: {fileID: 638310299}
-  - component: {fileID: 638310302}
   m_Layer: 9
   m_Name: Tilemap
   m_TagString: Untagged
@@ -3391,33 +3390,6 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
---- !u!50 &638310302
-Rigidbody2D:
-  serializedVersion: 4
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 638310297}
-  m_BodyType: 0
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDrag: 0
-  m_AngularDrag: 0.05
-  m_GravityScale: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_Interpolate: 0
-  m_SleepingMode: 1
-  m_CollisionDetection: 0
-  m_Constraints: 0
 --- !u!1 &700005532
 GameObject:
   m_ObjectHideFlags: 0
@@ -3657,15 +3629,20 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2975528357067803158, guid: 93fe344d9c4fa7f4fa09778fdb65a313,
+        type: 3}
+      propertyPath: topSpeed
+      value: 0.1
+      objectReference: {fileID: 0}
     - target: {fileID: 6801451285734234225, guid: 93fe344d9c4fa7f4fa09778fdb65a313,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.5
+      value: 6.5
       objectReference: {fileID: 0}
     - target: {fileID: 6801451285734234225, guid: 93fe344d9c4fa7f4fa09778fdb65a313,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6801451285734234225, guid: 93fe344d9c4fa7f4fa09778fdb65a313,
         type: 3}
@@ -3714,6 +3691,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1157283774713326398, guid: 93fe344d9c4fa7f4fa09778fdb65a313, type: 3}
+    - {fileID: 5970449290708409916, guid: 93fe344d9c4fa7f4fa09778fdb65a313, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

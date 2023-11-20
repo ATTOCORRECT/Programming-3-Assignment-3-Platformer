@@ -271,7 +271,7 @@ public class PlayerController : MonoBehaviour
 
     void UpdateDirection()
     {
-        if (!(left && right))
+        if (!(left && right)) // not pressing both
         {
             if (left) { direction = FacingDirection.Left; }
             if (right) { direction = FacingDirection.Right; }

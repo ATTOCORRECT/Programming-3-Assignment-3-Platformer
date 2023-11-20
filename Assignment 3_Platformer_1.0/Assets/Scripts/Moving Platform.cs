@@ -6,7 +6,7 @@ public class MovingPlatform : MonoBehaviour
 {
     public Transform endPositionTransform;
     public BoxCollider2D collisionBox;
-    Vector2 startPosition, endPosition, position, lastPosition, velocity, lastVelocity, acceleration, remainder;
+    Vector2 startPosition, endPosition, position, currentPosition, lastPosition, velocity, lastVelocity, acceleration, remainder;
     GameObject player;
     void Start()
     {
@@ -14,6 +14,7 @@ public class MovingPlatform : MonoBehaviour
         startPosition = transform.position;
         endPosition = endPositionTransform.position;
         position = startPosition;
+        currentPosition = startPosition;
         lastPosition = startPosition;
         velocity = Vector2.zero;
         lastVelocity = Vector2.zero;
@@ -23,14 +24,15 @@ public class MovingPlatform : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        transform.position = position;
+        
+        lastPosition = currentPosition;
 
         float t = Mathf.Sin(Time.fixedTime)*0.55f + 0.5f;
-        velocity = Vector2.Lerp(startPosition, endPosition, t);
+        currentPosition = Vector2.Lerp(startPosition, endPosition, t);
+
+        velocity = currentPosition - lastPosition;
 
         Move(velocity.x, velocity.y);
-
-        Debug.Log(player.GetComponent<PlayerController>().IsRiding(gameObject));
     }
 
     public void Move(float x, float y)
@@ -46,10 +48,38 @@ public class MovingPlatform : MonoBehaviour
             {
                 remainder.x -= moveX;
                 position.x += moveX;
+
+                if (false)//overlapCheck(actor))
+                {
+                    // Push
+                    //actor.MoveX(this.Right — actor.Left, actor.Squish);
+                }
+                else if (player.GetComponent<PlayerController>().IsRiding(gameObject))
+                {
+                    // Carry
+                    player.GetComponent<PlayerController>().MoveX(moveX);
+                }
+            }
+
+            if (moveY != 0)
+            {
+                remainder.y -= moveY;
+                position.y += moveY;
+
+                if (false)//overlapCheck(actor))
+                {
+                    // Push
+                    //actor.MoveX(this.Right — actor.Left, actor.Squish);
+                }
+                else if (player.GetComponent<PlayerController>().IsRiding(gameObject))
+                {
+                    // Carry
+                    player.GetComponent<PlayerController>().MoveY(moveY);
+                }
             }
         }
         // HERE https://www.maddymakesgames.com/articles/celeste_and_towerfall_physics/index.html
-
+        transform.position = position;
     }
 
     public Vector2 getAcceleration()

@@ -10,6 +10,9 @@ public class CharacterGraphicsController : MonoBehaviour
     private int IsWalkingProperty;
     private int IsGroundedProperty;
 
+    public Sprite defualt;
+    public Sprite crouched;
+
     // Use this for initialization
     void Start()
     {
@@ -34,6 +37,17 @@ public class CharacterGraphicsController : MonoBehaviour
             case PlayerController.FacingDirection.Right:
             default:
                 m_spriteRenderer.flipX = false;
+                break;
+        }
+
+        switch (m_player.GetState())
+        {
+            case PlayerController.State.Slide:
+                m_spriteRenderer.sprite = crouched;
+                break;
+            case PlayerController.State.Default:
+            default:
+                m_spriteRenderer.sprite = defualt;
                 break;
         }
     }

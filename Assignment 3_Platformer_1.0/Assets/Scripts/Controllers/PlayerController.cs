@@ -8,19 +8,25 @@ public class PlayerController : MonoBehaviour
     public enum FacingDirection { Left, Right }
     public FacingDirection direction;
 
-    public float topSpeed;
-    public float slideSpeed;
+    public float topSpeed, slideSpeed, airSpeed;
+
+    public GameObject spriteObject;
+
     public BoxCollider2D collisionBox;
     Vector2 collisionBoxDefaultSize, collisionBoxCrouchedSize, collisionBoxDefaultOffset, collisionBoxCrouchedOffset;
 
-    enum State { Default, Slide }
+    LayerMask ground;
+
+    public enum State { Default, Slide }
     State state;
 
-    bool up, left, down, right, jump, special; //input
+    bool up, left, down, right, jump, canJump = true, special; //input
 
-    float pixel = (1f / 16f);
+    float inputX = 0;
 
-    Vector2 position, velocity, additionalRelativeVelocity;
+    float pixel = 1;
+
+    Vector2 position, velocity, remainder;
 
     private void Start()
     {
@@ -28,6 +34,8 @@ public class PlayerController : MonoBehaviour
         collisionBoxCrouchedSize = new Vector2(pixel * 8, pixel * 6);
         collisionBoxDefaultOffset = new Vector2(0, -pixel * 2);
         collisionBoxCrouchedOffset = new Vector2(0, -pixel * 5);
+
+        ground = LayerMask.GetMask("Ground");
 
         velocity = Vector2.zero;
         position = transform.position;
@@ -47,29 +55,12 @@ public class PlayerController : MonoBehaviour
 
     public bool IsGrounded()
     {
-        int rays = 3;
-        for (int i = 0; i < rays; i++)
-        {
-            Vector2 rayOrigin = position + collisionBox.offset + (Mathf.Lerp(collisionBox.size.x - 0.0001f, -collisionBox.size.x + 0.0001f, i / (float)(rays - 1)) * Vector2.right / 2);
-
-            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.down, collisionBox.size.y / 2, LayerMask.GetMask("Ground"));
-            Debug.DrawRay(rayOrigin, Vector2.down * (collisionBox.size.y / 2 + pixel), Color.cyan);
-            if (hit) { return true; }
-        }
-        return false;
+        return collideAt(ground, Vector2.down);
     }
 
-    public GameObject Touching()
+    public State GetState()
     {
-        int rays = 3;
-        for (int i = 0; i < rays; i++)
-        {
-            Vector2 rayOrigin = position + collisionBox.offset + (Mathf.Lerp(collisionBox.size.x - 0.0001f, -collisionBox.size.x + 0.0001f, i / (float)(rays - 1)) * Vector2.right / 2);
-
-            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.down, collisionBox.size.y / 2 + pixel * 8, LayerMask.GetMask("Ground"));
-            if (hit) { return hit.collider.gameObject; }
-        }
-        return null;
+        return state;
     }
 
     public FacingDirection GetFacingDirection()
@@ -86,6 +77,7 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         Physics();
+
         //Debug.Log("Velocity " + velocity);
 
         //Debug.Log("is Grounded " + IsGrounded());
@@ -94,77 +86,105 @@ public class PlayerController : MonoBehaviour
 
         //Debug.Log("State " + state);
 
-        Debug.Log(Touching() != null);
-
     }
 
     void Physics()
     {
-        velocity += Vector2.down * 0.01f; // gravity
-
-        //collision checks
-        CollideH();
-        CollideV();
-
-        position += velocity;
-        transform.position = position;
-
-        VelocityInheritance();
+        //VelocityInheritance();
 
         Default();
         Slide();
         Walk();
+        Jump();
+        AirControll();
         GroundFriction();
+        AirResistance();
+
+        velocity += Vector2.down * 0.2f; // gravity
+
+        MoveX(velocity.x);
+        MoveY(velocity.y);
     }
 
-    void CollideH()
+    RaycastHit2D collideAt(LayerMask layermask, Vector2 offset)
     {
-        int rays = 3;
-        for (int i = 0; i < rays; i++)
-        {
-            Vector2 rayOrigin = position + collisionBox.offset + (Mathf.Lerp(collisionBox.size.y - 0.0001f, -collisionBox.size.y + 0.0001f, i / (float)(rays - 1)) * Vector2.up / 2);
-            Vector2 rayDirection = velocity.x * Vector2.right;
-            float offset = collisionBox.size.x / 2 * Mathf.Sign(Mathf.Abs(velocity.x));
-            float rayDistance = Mathf.Abs(velocity.x) + offset;
+        Vector2 rayOrigin = position + collisionBox.offset;
+        Vector2 rayDirection = offset;
+        float rayDistance = offset.magnitude;
 
-            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, rayDirection, rayDistance, LayerMask.GetMask("Ground"));
-            Debug.DrawRay(rayOrigin, rayDirection.normalized * rayDistance, Color.red);
+        RaycastHit2D hit = Physics2D.BoxCast(rayOrigin, collisionBox.size - Vector2.one, 0, rayDirection, rayDistance, layermask);
 
-            if (hit)
-            {
-                //if (hit.distance < offset) { GameObject.Destroy(gameObject); }
-                velocity = new Vector2(Mathf.Clamp(velocity.x, -hit.distance + offset, hit.distance - offset), velocity.y);
-                return;
-            }
-        }
+        Debug.DrawRay(rayOrigin, rayDirection.normalized * rayDistance, Color.red);
+        return hit;
     }
 
-    void CollideV()
+    public void MoveX(float amount)
     {
-        int rays = 3;
-        for (int i = 0; i < rays; i++)
+        remainder.x += amount;
+        int move = Mathf.RoundToInt(remainder.x);
+
+        if (move != 0)
         {
-            Vector2 rayOrigin = position + collisionBox.offset + (Mathf.Lerp(collisionBox.size.x - 0.0001f, -collisionBox.size.x + 0.0001f, i / (float)(rays - 1)) * Vector2.right / 2);
-            Vector2 rayDirection = velocity.y * Vector2.up;
-            float offset = collisionBox.size.y / 2 * Mathf.Sign(Mathf.Abs(velocity.y));
-            float rayDistance = Mathf.Abs(velocity.y) + offset;
+            remainder.x -= move;
+            int sign = (int)Mathf.Sign(move);
 
-            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, rayDirection, rayDistance, LayerMask.GetMask("Ground"));
-            Debug.DrawRay(rayOrigin, rayDirection.normalized * rayDistance, Color.red);
-
-            if (hit)
             {
-                //if (hit.distance < offset) { GameObject.Destroy(gameObject); }
-                velocity = new Vector2(velocity.x, Mathf.Clamp(velocity.y, -hit.distance + offset, hit.distance - offset));
-                return;
+                while (move * sign > 0)
+                {
+                    if(!collideAt(ground, new Vector2(sign, 0)))
+                    {
+                        // no ground immediately beside
+                        position.x += sign;
+                        move -= sign;
+                    }
+                    else
+                    {
+                        // hit ground!
+                        //Debug.Log("Horizontal Collision!");
+                        velocity.x = 0;
+                        break;
+                    }
+                }
             }
         }
+        transform.position = position;
+    } 
+
+    public void MoveY(float amount)
+    {
+        remainder.y += amount;
+        int move = Mathf.RoundToInt(remainder.y);
+
+        if (move != 0)
+        {
+            remainder.y -= move;
+            int sign = (int)Mathf.Sign(move);
+
+            while (move * sign > 0)
+            {
+                if (!collideAt(ground, new Vector2(0, sign)))
+                {
+                    // no ground immediately beside
+                    position.y += sign;
+                    move -= sign;
+                }
+                else
+                {
+                    // hit ground!
+                    //Debug.Log("Vertical Collision!");
+                    velocity.y = 0;
+                    break;
+                }
+            }
+        }
+        transform.position = position;
     }
 
     void Default()
     {
         if (state == State.Default)
         {
+            //spriteObject.transform.localScale = new Vector2(1f, 1f);
             collisionBox.size = collisionBoxDefaultSize;
             collisionBox.offset = collisionBoxDefaultOffset;
         }
@@ -176,15 +196,12 @@ public class PlayerController : MonoBehaviour
         {
             state = State.Slide;
 
-            if (left)
-            {
-                velocity += Mathf.Clamp(-Mathf.Abs(velocity.x) + slideSpeed + Mathf.Abs(additionalRelativeVelocity.x), 0, slideSpeed) * Vector2.left;
-            }
+            spriteObject.transform.localScale = new Vector2(1.5f, 0.5f);
 
-            if (right)
-            {
-                velocity += Mathf.Clamp(-Mathf.Abs(velocity.x) + slideSpeed + Mathf.Abs(additionalRelativeVelocity.x), 0, slideSpeed) * Vector2.right;
-            }
+            collisionBox.size = collisionBoxCrouchedSize;
+            collisionBox.offset = collisionBoxCrouchedOffset;
+
+            velocity += Mathf.Clamp(-velocity.x * inputX + slideSpeed, 0, slideSpeed) * inputX * Vector2.right;
         }
 
         if ((!down || !IsGrounded()) && state == State.Slide)
@@ -194,8 +211,8 @@ public class PlayerController : MonoBehaviour
 
         if (state == State.Slide)
         {
-            collisionBox.size = collisionBoxCrouchedSize;
-            collisionBox.offset = collisionBoxCrouchedOffset;
+            spriteObject.transform.localScale = new Vector2(1f, 1f);
+            velocity += Mathf.Clamp(-velocity.x * inputX + slideSpeed, 0, slideSpeed * 0.01f) * inputX * Vector2.right;
         }
     }
 
@@ -203,55 +220,46 @@ public class PlayerController : MonoBehaviour
     {
         if (IsGrounded() && state == State.Default)
         {
-            if (left)
-            {
-                velocity += Mathf.Clamp(-velocity.x + topSpeed + Mathf.Abs(additionalRelativeVelocity.x), 0, topSpeed * 0.1f) * Vector2.left;
-            }
-
-            if (right)
-            {
-                velocity += Mathf.Clamp(velocity.x + topSpeed + Mathf.Abs(additionalRelativeVelocity.x), 0, topSpeed * 0.1f) * Vector2.right;
-            }
+            velocity += Mathf.Clamp(-velocity.x * inputX + topSpeed, 0, topSpeed * 0.1f) * inputX * Vector2.right;
         }
     }
 
-    void VelocityInheritance()
+    void Jump()
     {
-        additionalRelativeVelocity = Vector2.zero;
-        if (Touching() != null)
+        if (IsGrounded() && jump)
         {
-            if (Touching().tag == "MovingPlatform")
-            {
-                additionalRelativeVelocity = Touching().GetComponent<MovingPlatform>().getVelocity();
-                velocity += Touching().GetComponent<MovingPlatform>().getAcceleration();
-            }
+            new Vector2(0.5f, 1.5f);
+            velocity.y = 4;
+        }
+    }
+    void AirControll()
+    {
+        if (!IsGrounded())
+        {
+            velocity += Mathf.Clamp(-velocity.x * inputX + airSpeed, 0, airSpeed * 0.05f) * inputX * Vector2.right;
         }
     }
 
     void GroundFriction()
     {
-        Vector2 targetVelocity = Vector2.zero;
-
-        if ((!(left != right) || Mathf.Abs(velocity.x) > topSpeed + Mathf.Abs(additionalRelativeVelocity.x)) && IsGrounded() && state == State.Default)
+        if ((inputX == 0 || velocity.x * Mathf.Sign(inputX) > topSpeed ) && IsGrounded() && state == State.Default)
         {
-            if (Touching() != null)
-            {
-                if (Touching().tag == "MovingPlatform")
-                {
-                    targetVelocity = Touching().GetComponent<MovingPlatform>().getVelocity();
-                }
-            }
+            velocity.x = Mathf.Lerp(velocity.x, 0, 0.25f);
+        }
+    }
 
-            velocity = Vector2.Lerp(velocity, targetVelocity, 0.25f);
+    void AirResistance()
+    {
+        if (inputX * Mathf.Sign(velocity.x) <= 0 && velocity.x * Mathf.Sign(inputX) < airSpeed * 1.5f && !IsGrounded() && state == State.Default)
+        {
+            velocity.x = Mathf.Lerp(velocity.x, 0, 0.05f);
         }
     }
 
     void UpdateDirection()
     {
-        
         if (!(left && right))
         {
-
             if (left) { direction = FacingDirection.Left; }
             if (right) { direction = FacingDirection.Right; }
         }
@@ -259,17 +267,16 @@ public class PlayerController : MonoBehaviour
     void PlayerInput()
     {
         //up    = Input.GetKey(KeyCode.W);
-        left  = Input.GetKey(KeyCode.A);
+        left  = Input.GetKey(KeyCode.A); // move left
         down  = Input.GetKey(KeyCode.S); // slide
-        right = Input.GetKey(KeyCode.D);
+        right = Input.GetKey(KeyCode.D); // move right
 
-        jump   = Input.GetKey(KeyCode.Space);
+        jump   = Input.GetKey(KeyCode.Space); // jump
 
         //special = Input.GetKey(KeyCode.LeftShift);
-    }
 
-    public void Push(Vector2 push)
-    {
-        position += push;
+        inputX = 0;
+        if (left) { inputX -= 1; }
+        if (right) { inputX += 1; }
     }
 }

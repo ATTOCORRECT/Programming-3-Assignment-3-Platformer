@@ -32,11 +32,11 @@ public class MovingPlatform : MonoBehaviour
         velocity = position - lastPosition;
         acceleration = velocity - lastVelocity;
 
-        CollideV();
-        CollideH();
+/*        CollideV();
+        CollideH();*/
     }
 
-    void CollideH()
+   /* void CollideH()
     {
         int rays = 3;
         for (int i = 0; i < rays; i++)
@@ -80,7 +80,7 @@ public class MovingPlatform : MonoBehaviour
             }
         }
     }
-
+*/
     public Vector2 getAcceleration()
     {
         return acceleration;

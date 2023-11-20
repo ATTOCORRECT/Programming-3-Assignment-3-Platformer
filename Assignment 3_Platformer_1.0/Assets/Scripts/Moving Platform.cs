@@ -6,9 +6,11 @@ public class MovingPlatform : MonoBehaviour
 {
     public Transform endPositionTransform;
     public BoxCollider2D collisionBox;
-    Vector2 startPosition, endPosition, position, lastPosition, velocity, lastVelocity, acceleration;
+    Vector2 startPosition, endPosition, position, lastPosition, velocity, lastVelocity, acceleration, remainder;
+    GameObject player;
     void Start()
     {
+        player = GameObject.Find("Buddy");
         startPosition = transform.position;
         endPosition = endPositionTransform.position;
         position = startPosition;
@@ -23,64 +25,33 @@ public class MovingPlatform : MonoBehaviour
     {
         transform.position = position;
 
-        lastPosition = position;
-        lastVelocity = velocity;
-
         float t = Mathf.Sin(Time.fixedTime)*0.55f + 0.5f;
-        position = Vector2.Lerp(startPosition, endPosition, t);
+        velocity = Vector2.Lerp(startPosition, endPosition, t);
 
-        velocity = position - lastPosition;
-        acceleration = velocity - lastVelocity;
+        Move(velocity.x, velocity.y);
 
-/*        CollideV();
-        CollideH();*/
+        Debug.Log(player.GetComponent<PlayerController>().IsRiding(gameObject));
     }
 
-   /* void CollideH()
+    public void Move(float x, float y)
     {
-        int rays = 3;
-        for (int i = 0; i < rays; i++)
+        remainder.x += x;
+        remainder.y += y;
+        int moveX = Mathf.RoundToInt(remainder.x);
+        int moveY = Mathf.RoundToInt(remainder.y);
+
+        if (moveX != 0 || moveY != 0)
         {
-            Vector2 rayOrigin = position + collisionBox.offset + (Mathf.Lerp(collisionBox.size.y - 0.0001f, -collisionBox.size.y + 0.0001f, i / (float)(rays - 1)) * Vector2.up / 2);
-            Vector2 rayDirection = velocity.x * Vector2.right;
-            float offset = collisionBox.size.x / 2 * Mathf.Sign(Mathf.Abs(velocity.x));
-            float rayDistance = Mathf.Abs(velocity.x) + offset;
-
-            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, rayDirection, rayDistance, LayerMask.GetMask("Player"));
-            Debug.DrawRay(rayOrigin, rayDirection.normalized * rayDistance, Color.red);
-
-            if (hit)
+            if (moveX != 0)
             {
-                Debug.Log("HIT");
-                Vector2 push = new Vector2((Mathf.Abs(velocity.x) - (hit.distance - offset)) * Mathf.Sign(velocity.x), 0);
-                hit.collider.gameObject.GetComponentInParent<PlayerController>().Push(push);
-                return;
+                remainder.x -= moveX;
+                position.x += moveX;
             }
         }
+        // HERE https://www.maddymakesgames.com/articles/celeste_and_towerfall_physics/index.html
+
     }
 
-    void CollideV()
-    {
-        int rays = 3;
-        for (int i = 0; i < rays; i++)
-        {
-            Vector2 rayOrigin = position + collisionBox.offset + (Mathf.Lerp(collisionBox.size.x - 0.0001f, -collisionBox.size.x + 0.0001f, i / (float)(rays - 1)) * Vector2.right / 2);
-            Vector2 rayDirection = velocity.y * Vector2.up;
-            float offset = collisionBox.size.y / 2 * Mathf.Sign(Mathf.Abs(velocity.y));
-            float rayDistance = Mathf.Abs(velocity.y) + offset;
-
-            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, rayDirection, rayDistance, LayerMask.GetMask("Player"));
-            Debug.DrawRay(rayOrigin, rayDirection.normalized * rayDistance, Color.red);
-
-            if (hit)
-            {
-                Vector2 push = new Vector2(0, (Mathf.Abs(velocity.y) - (hit.distance - offset)) * Mathf.Sign(velocity.y));
-                hit.collider.gameObject.GetComponentInParent<PlayerController>().Push(push);
-                return;
-            }
-        }
-    }
-*/
     public Vector2 getAcceleration()
     {
         return acceleration;

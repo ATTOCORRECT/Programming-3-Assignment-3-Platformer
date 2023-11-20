@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviour
     public float topSpeed, slideSpeed, airSpeed;
 
     public GameObject spriteObject;
+    Vector2 spriteScale = Vector2.one;
 
     public BoxCollider2D collisionBox;
     Vector2 collisionBoxDefaultSize, collisionBoxCrouchedSize, collisionBoxDefaultOffset, collisionBoxCrouchedOffset;
@@ -20,7 +21,7 @@ public class PlayerController : MonoBehaviour
     public enum State { Default, Slide }
     State state;
 
-    bool up, left, down, right, jump, canJump = true, special; //input
+    bool up, left, down, right, jump, special; //input
 
     float inputX = 0;
 
@@ -58,6 +59,16 @@ public class PlayerController : MonoBehaviour
         return collideAt(ground, Vector2.down);
     }
 
+    public bool IsRiding(GameObject solid)
+    {
+        RaycastHit2D Hit = collideAt(ground, Vector2.down);
+        if (Hit)
+        {
+            return solid == Hit.collider.gameObject;
+        }
+        return false;
+    }
+
     public State GetState()
     {
         return state;
@@ -72,6 +83,8 @@ public class PlayerController : MonoBehaviour
     {
         UpdateDirection();
         PlayerInput();
+
+        spriteObject.transform.localScale = new Vector2(Mathf.Round(spriteScale.x * 8) / 8, Mathf.Round(spriteScale.y * 8) / 8);
     }
 
     private void FixedUpdate()
@@ -184,7 +197,7 @@ public class PlayerController : MonoBehaviour
     {
         if (state == State.Default)
         {
-            //spriteObject.transform.localScale = new Vector2(1f, 1f);
+            spriteScale = Vector2.Lerp(spriteScale, Vector2.one, 0.25f);
             collisionBox.size = collisionBoxDefaultSize;
             collisionBox.offset = collisionBoxDefaultOffset;
         }
@@ -196,7 +209,7 @@ public class PlayerController : MonoBehaviour
         {
             state = State.Slide;
 
-            spriteObject.transform.localScale = new Vector2(1.5f, 0.5f);
+            spriteScale = new Vector2(1.5f, 0.5f);
 
             collisionBox.size = collisionBoxCrouchedSize;
             collisionBox.offset = collisionBoxCrouchedOffset;
@@ -211,7 +224,7 @@ public class PlayerController : MonoBehaviour
 
         if (state == State.Slide)
         {
-            spriteObject.transform.localScale = new Vector2(1f, 1f);
+            spriteScale = Vector2.Lerp(spriteScale, Vector2.one, 0.25f);
             velocity += Mathf.Clamp(-velocity.x * inputX + slideSpeed, 0, slideSpeed * 0.01f) * inputX * Vector2.right;
         }
     }
@@ -228,7 +241,7 @@ public class PlayerController : MonoBehaviour
     {
         if (IsGrounded() && jump)
         {
-            new Vector2(0.5f, 1.5f);
+            spriteScale = new Vector2(0.5f, 1.5f);
             velocity.y = 4;
         }
     }

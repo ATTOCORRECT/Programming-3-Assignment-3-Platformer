@@ -1,5 +1,37 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &875735349042661111
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1798579005161499508}
+  m_Layer: 8
+  m_Name: Sprite Scaler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1798579005161499508
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 875735349042661111}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -8, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 9101096807214732178}
+  m_Father: {fileID: 6801451285734234225}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2881517228560982540
 GameObject:
   m_ObjectHideFlags: 0
@@ -103,11 +135,11 @@ Transform:
   m_GameObject: {fileID: 4083849243589682380}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 6801451285734234225}
+  m_Father: {fileID: 1798579005161499508}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &5292243469904888259
 SpriteRenderer:
@@ -150,7 +182,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 2
-  m_Sprite: {fileID: -1600393617, guid: 883c668472d4f3b439ad34a73c950f0c, type: 3}
+  m_Sprite: {fileID: 1912720162, guid: f1385510cde8b9c449e8d204434bcce4, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -223,7 +255,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 9101096807214732178}
+  - {fileID: 1798579005161499508}
   - {fileID: 6490082237666245895}
   - {fileID: 7692475074834284624}
   m_Father: {fileID: 0}
@@ -244,7 +276,7 @@ MonoBehaviour:
   topSpeed: 2
   slideSpeed: 4
   airSpeed: 3
-  spriteObject: {fileID: 4083849243589682380}
+  spriteObject: {fileID: 875735349042661111}
   collisionBox: {fileID: 866594704331055883}
 --- !u!114 &1779115182464560856
 MonoBehaviour:
@@ -258,5 +290,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c97e26b1edd7b946b59097ccc1b8445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defualt: {fileID: -1600393617, guid: 883c668472d4f3b439ad34a73c950f0c, type: 3}
-  crouched: {fileID: 1414382669, guid: 883c668472d4f3b439ad34a73c950f0c, type: 3}
+  defualt: {fileID: 1912720162, guid: f1385510cde8b9c449e8d204434bcce4, type: 3}
+  crouched: {fileID: 356284753, guid: f1385510cde8b9c449e8d204434bcce4, type: 3}

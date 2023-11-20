@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6490082237666245895}
   - component: {fileID: 866594704331055883}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Collision Box
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -87,7 +87,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9101096807214732178}
   - component: {fileID: 5292243469904888259}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Sprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -149,8 +149,8 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_Sprite: {fileID: 810495987, guid: 883c668472d4f3b439ad34a73c950f0c, type: 3}
+  m_SortingOrder: 2
+  m_Sprite: {fileID: -1600393617, guid: 883c668472d4f3b439ad34a73c950f0c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -170,7 +170,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7692475074834284624}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Hit Box
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -203,7 +203,7 @@ GameObject:
   - component: {fileID: 6801451285734234225}
   - component: {fileID: 2975528357067803158}
   - component: {fileID: 1779115182464560856}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Buddy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -242,6 +242,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   direction: 0
   topSpeed: 0.1
+  slideSpeed: 0.2
   collisionBox: {fileID: 866594704331055883}
 --- !u!114 &1779115182464560856
 MonoBehaviour:

@@ -154,7 +154,16 @@ public class PlayerController : MonoBehaviour
                     {
                         // hit ground!
                         //Debug.Log("Horizontal Collision!");
-                        velocity.x = 0;
+                        if (Mathf.Abs(velocity.x) > 2) {
+                            float zippy = Mathf.Abs(velocity.x);
+                            velocity.x = 0;
+                            velocity.y = zippy;
+                        }
+                        else
+                        {
+                            velocity.x = 0;
+                        }
+                        
                         break;
                     }
                 }

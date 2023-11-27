@@ -4,33 +4,21 @@ using UnityEngine;
 
 public class Screen : MonoBehaviour
 {
-    public BoxCollider2D collider;
+    public BoxCollider2D bounds, trigger;
     // Start is called before the first frame update
     void Start()
     {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        trigger.size = bounds.size - new Vector2(32,32);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        Debug.Log("Enter!");
-    }
-
-    /*    private void OnTriggerEnter2D(Collider2D collision)
+        if (collision != null)
         {
-            Debug.Log("ENTER!");
-            if (collision != null)
+            if (collision.gameObject.layer == LayerMask.NameToLayer("Player"))
             {
-                if (collision.gameObject.layer == LayerMask.GetMask("Player"))
-                {
-                    SendMessageUpwards("ChangeScreen", collider);
-                }
+                SendMessageUpwards("ChangeScreen", bounds);
             }
-        }*/
+        }
+    }
 }

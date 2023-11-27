@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ChangeScreen : MonoBehaviour
+public class Root : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
@@ -14,5 +14,10 @@ public class ChangeScreen : MonoBehaviour
     void Update()
     {
         
+    }
+
+    void ChangeScreen(BoxCollider2D screen)
+    {
+        BroadcastMessage("ChangeDollyTrackedScreen", screen);
     }
 }

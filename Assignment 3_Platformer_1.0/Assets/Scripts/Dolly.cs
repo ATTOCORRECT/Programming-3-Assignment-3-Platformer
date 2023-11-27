@@ -20,7 +20,7 @@ public class Dolly : MonoBehaviour
         position = Vector2.Lerp(position, targetPosition, 0.2f);
     }
 
-    void ChangeScreen(BoxCollider2D Screen)
+    void ChangeDollyTrackedScreen(BoxCollider2D Screen)
     {
         targetPosition = Screen.transform.position;
     }

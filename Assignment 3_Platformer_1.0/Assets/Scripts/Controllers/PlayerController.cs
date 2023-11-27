@@ -27,7 +27,8 @@ public class PlayerController : MonoBehaviour
 
     float pixel = 1;
 
-    Vector2 position, velocity, remainder;
+    [System.NonSerialized]
+    public Vector2 position, velocity, remainder;
 
     private void Start()
     {
@@ -112,6 +113,7 @@ public class PlayerController : MonoBehaviour
         AirControll();
         GroundFriction();
         AirResistance();
+        Squish();
 
         velocity += Vector2.down * gravity; // gravity
 
@@ -154,7 +156,6 @@ public class PlayerController : MonoBehaviour
                     else
                     {
                         // hit ground!
-                        //Debug.Log("Horizontal Collision!");
 
                         // if moving fast enough, convert horizontal vel to vertical vel
                         if (Mathf.Abs(velocity.x) > 2) 
@@ -289,6 +290,15 @@ public class PlayerController : MonoBehaviour
         if (inputX * Mathf.Sign(velocity.x) <= 0 && velocity.x * Mathf.Sign(inputX) < airSpeed * 1.5f && !IsGrounded() && state == State.Default) // this line is kinda hard to follow, hopefully the 2 explinations help
         {
             velocity.x = Mathf.Lerp(velocity.x, 0, 0.05f);
+        }
+    }
+
+    void Squish()
+    {
+        if (collideAt(ground, Vector2.zero))
+        {
+            Debug.Log("Squished!");
+            //GameObject.Destroy(gameObject);
         }
     }
 

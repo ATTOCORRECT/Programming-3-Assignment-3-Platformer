@@ -8,9 +8,16 @@ public class MovingPlatform : MonoBehaviour
     public BoxCollider2D collisionBox;
     Vector2 startPosition, endPosition, position, currentPosition, lastPosition, velocity, lastVelocity, acceleration, remainder;
     GameObject player;
+    PlayerController playerController;
+    BoxCollider2D playerCollisionBox;
+    LayerMask playerlayer;
+
     void Start()
     {
         player = GameObject.Find("Buddy");
+        playerController = player.GetComponent<PlayerController>();
+        playerCollisionBox = player.GetComponentInChildren<BoxCollider2D>();
+        playerlayer = LayerMask.GetMask("Player");
         startPosition = transform.position;
         endPosition = endPositionTransform.position;
         position = startPosition;
@@ -35,6 +42,18 @@ public class MovingPlatform : MonoBehaviour
         Move(velocity.x, velocity.y);
     }
 
+    RaycastHit2D collideAt(LayerMask layermask, Vector2 offset)
+    {
+        Vector2 rayOrigin = position + collisionBox.offset;
+        Vector2 rayDirection = offset;
+        float rayDistance = offset.magnitude;
+
+        RaycastHit2D hit = Physics2D.BoxCast(rayOrigin, collisionBox.size - Vector2.one, 0, rayDirection, rayDistance, layermask);
+
+        Debug.DrawRay(rayOrigin, rayDirection.normalized * rayDistance, Color.red);
+        return hit;
+    }
+
     public void Move(float x, float y)
     {
         remainder.x += x;
@@ -44,20 +63,26 @@ public class MovingPlatform : MonoBehaviour
 
         if (moveX != 0 || moveY != 0)
         {
+            bool isBeingRidden = playerController.IsRiding(gameObject);
+            collisionBox.enabled = false;
+
             if (moveX != 0)
             {
                 remainder.x -= moveX;
                 position.x += moveX;
 
-                if (false)//overlapCheck(actor))
+                int signX = (int)Mathf.Sign(moveX);
+
+                if (collideAt(playerlayer, new Vector2(-moveX,0)))
                 {
                     // Push
-                    //actor.MoveX(this.Right — actor.Left, actor.Squish);
+                    int pushX = (int)((position.x + collisionBox.size.x / 2 * signX) - (playerController.position.x - playerCollisionBox.size.x / 2 * signX));
+                    playerController.MoveX(pushX);
                 }
-                else if (player.GetComponent<PlayerController>().IsRiding(gameObject))
+                else if (isBeingRidden)
                 {
                     // Carry
-                    player.GetComponent<PlayerController>().MoveX(moveX);
+                    playerController.MoveX(moveX);
                 }
             }
 
@@ -66,17 +91,22 @@ public class MovingPlatform : MonoBehaviour
                 remainder.y -= moveY;
                 position.y += moveY;
 
-                if (false)//overlapCheck(actor))
+                int signY = (int)Mathf.Sign(moveY);
+
+                if (collideAt(playerlayer, new Vector2(0, -moveY)))
                 {
                     // Push
-                    //actor.MoveX(this.Right — actor.Left, actor.Squish);
+                    int pushY = (int)((position.y + collisionBox.size.y / 2 * signY) - (playerController.position.y - playerCollisionBox.size.y / 2 * signY + playerCollisionBox.offset.y));
+                    playerController.MoveY(pushY);
                 }
-                else if (player.GetComponent<PlayerController>().IsRiding(gameObject))
+                else if (isBeingRidden)
                 {
                     // Carry
-                    player.GetComponent<PlayerController>().MoveY(moveY);
+                    playerController.MoveY(moveY);
                 }
             }
+
+            collisionBox.enabled = true;
         }
         // HERE https://www.maddymakesgames.com/articles/celeste_and_towerfall_physics/index.html
         transform.position = position;

@@ -273,9 +273,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   direction: 0
-  topSpeed: 2
+  walkSpeed: 0
+  walkAcceleration: 0.1
   slideSpeed: 4
   airSpeed: 3
+  airAcceleration: 0.05
+  jumpVelocity: 4
   spriteObject: {fileID: 875735349042661111}
   collisionBox: {fileID: 866594704331055883}
 --- !u!114 &1779115182464560856

@@ -8,7 +8,8 @@ public class PlayerController : MonoBehaviour
     public enum FacingDirection { Left, Right }
     public FacingDirection direction;
 
-    public float topSpeed, slideSpeed, airSpeed;
+    public float walkSpeed, walkAcceleration, slideSpeed, airSpeed, airAcceleration, jumpVelocity;
+    float gravity = 0.2f;
 
     public GameObject spriteObject;
     Vector2 spriteScale = Vector2.one;
@@ -22,8 +23,7 @@ public class PlayerController : MonoBehaviour
     State state;
 
     bool up, left, down, right, jump, special; //input
-
-    float inputX = 0;
+    int inputX = 0;
 
     float pixel = 1;
 
@@ -84,7 +84,7 @@ public class PlayerController : MonoBehaviour
         UpdateDirection();
         PlayerInput();
 
-        spriteObject.transform.localScale = new Vector2(Mathf.Round(spriteScale.x * 8) / 8, Mathf.Round(spriteScale.y * 8) / 8);
+        spriteObject.transform.localScale = new Vector2(Mathf.Round(spriteScale.x * 8) / 8, Mathf.Round(spriteScale.y * 8) / 8); // pixel perfect!
     }
 
     private void FixedUpdate()
@@ -113,8 +113,9 @@ public class PlayerController : MonoBehaviour
         GroundFriction();
         AirResistance();
 
-        velocity += Vector2.down * 0.2f; // gravity
+        velocity += Vector2.down * gravity; // gravity
 
+        // movement and collision handling
         MoveX(velocity.x);
         MoveY(velocity.y);
     }
@@ -154,7 +155,10 @@ public class PlayerController : MonoBehaviour
                     {
                         // hit ground!
                         //Debug.Log("Horizontal Collision!");
-                        if (Mathf.Abs(velocity.x) > 2) {
+
+                        // if moving fast enough, convert horizontal vel to vertical vel
+                        if (Mathf.Abs(velocity.x) > 2) 
+                        { 
                             float zippy = Mathf.Abs(velocity.x);
                             velocity.x = 0;
                             velocity.y = zippy;
@@ -163,7 +167,6 @@ public class PlayerController : MonoBehaviour
                         {
                             velocity.x = 0;
                         }
-                        
                         break;
                     }
                 }
@@ -171,6 +174,11 @@ public class PlayerController : MonoBehaviour
         }
         transform.position = position;
     } 
+
+    /* btw my justification for handling movement & collisions like this is that ive tried 2 other collision algorithms, didnt like 
+     * them for what i was trying to achive, and decided that it was best that if i wanted to make a pixel precision type platformer
+     * thati should just simply follow what celeste did to make theirs. one thing led to the next and i found doccumentation and 
+     * a blog post from maddy (dev for celeste) explaining how the collision handling works */
 
     public void MoveY(float amount)
     {
@@ -206,34 +214,37 @@ public class PlayerController : MonoBehaviour
     {
         if (state == State.Default)
         {
-            spriteScale = Vector2.Lerp(spriteScale, Vector2.one, 0.25f);
+            spriteScale = Vector2.Lerp(spriteScale, Vector2.one, 0.25f); // return sprite to normal
+
+            // normal hitbox
             collisionBox.size = collisionBoxDefaultSize;
             collisionBox.offset = collisionBoxDefaultOffset;
         }
     }
 
-    void Slide()
+    void Slide() // slide movement ability
     {
-        if (down && IsGrounded() && state == State.Default)
+        if (down && IsGrounded() && state == State.Default) // start slide
         {
             state = State.Slide;
 
-            spriteScale = new Vector2(1.5f, 0.5f);
+            spriteScale = new Vector2(1.5f, 0.5f); // squish
 
+            // crouched hitbox
             collisionBox.size = collisionBoxCrouchedSize;
             collisionBox.offset = collisionBoxCrouchedOffset;
 
-            velocity += Mathf.Clamp(-velocity.x * inputX + slideSpeed, 0, slideSpeed) * inputX * Vector2.right;
+            velocity += Mathf.Clamp(-velocity.x * inputX + slideSpeed, 0, slideSpeed) * inputX * Vector2.right; // capped impulse boost
         }
 
-        if ((!down || !IsGrounded()) && state == State.Slide)
+        if ((!down || !IsGrounded()) && state == State.Slide) // stop slide
         {
             state = State.Default;
         }
 
-        if (state == State.Slide)
+        if (state == State.Slide) // sliding
         {
-            spriteScale = Vector2.Lerp(spriteScale, Vector2.one, 0.25f);
+            spriteScale = Vector2.Lerp(spriteScale, Vector2.one, 0.25f); // return sprite to normal
             velocity += Mathf.Clamp(-velocity.x * inputX + slideSpeed, 0, slideSpeed * 0.01f) * inputX * Vector2.right;
         }
     }
@@ -242,7 +253,7 @@ public class PlayerController : MonoBehaviour
     {
         if (IsGrounded() && state == State.Default)
         {
-            velocity += Mathf.Clamp(-velocity.x * inputX + topSpeed, 0, topSpeed * 0.1f) * inputX * Vector2.right;
+            velocity += Mathf.Clamp(-velocity.x * inputX + walkSpeed, 0, walkSpeed * walkAcceleration) * inputX * Vector2.right; // capped acceleration
         }
     }
 
@@ -250,7 +261,7 @@ public class PlayerController : MonoBehaviour
     {
         if (IsGrounded() && jump)
         {
-            spriteScale = new Vector2(0.5f, 1.5f);
+            spriteScale = new Vector2(0.5f, 1.5f); // stretch
             velocity.y = 4;
         }
     }
@@ -258,13 +269,14 @@ public class PlayerController : MonoBehaviour
     {
         if (!IsGrounded())
         {
-            velocity += Mathf.Clamp(-velocity.x * inputX + airSpeed, 0, airSpeed * 0.05f) * inputX * Vector2.right;
+            velocity += Mathf.Clamp(-velocity.x * inputX + airSpeed, 0, airSpeed * airAcceleration) * inputX * Vector2.right; // capped acceleration
         }
     }
 
     void GroundFriction()
     {
-        if ((inputX == 0 || velocity.x * Mathf.Sign(inputX) > topSpeed ) && IsGrounded() && state == State.Default)
+        // if ( no x input or x velocity is greater than walk speed ) && grounded && default state
+        if ((inputX == 0 || Mathf.Abs(velocity.x) > walkSpeed) && IsGrounded() && state == State.Default)
         {
             velocity.x = Mathf.Lerp(velocity.x, 0, 0.25f);
         }
@@ -272,7 +284,9 @@ public class PlayerController : MonoBehaviour
 
     void AirResistance()
     {
-        if (inputX * Mathf.Sign(velocity.x) <= 0 && velocity.x * Mathf.Sign(inputX) < airSpeed * 1.5f && !IsGrounded() && state == State.Default)
+        // player is trying to resist movement or isnt moving && they havent hit critical airspeed (no resistance) && is in the air && default state
+        // if the input dir doesnt match the velocity dir && horizontal velocity is less than 1.5x the max airspeed && not grounded && default state
+        if (inputX * Mathf.Sign(velocity.x) <= 0 && velocity.x * Mathf.Sign(inputX) < airSpeed * 1.5f && !IsGrounded() && state == State.Default) // this line is kinda hard to follow, hopefully the 2 explinations help
         {
             velocity.x = Mathf.Lerp(velocity.x, 0, 0.05f);
         }
@@ -280,7 +294,8 @@ public class PlayerController : MonoBehaviour
 
     void UpdateDirection()
     {
-        if (!(left && right)) // not pressing both
+        // left XNOR right
+        if (left != right)
         {
             if (left) { direction = FacingDirection.Left; }
             if (right) { direction = FacingDirection.Right; }
@@ -297,7 +312,7 @@ public class PlayerController : MonoBehaviour
 
         //special = Input.GetKey(KeyCode.LeftShift);
 
-        inputX = 0;
+        inputX = 0; // x input as an int. -1 left, 0 nothing, 1 right.
         if (left) { inputX -= 1; }
         if (right) { inputX += 1; }
     }

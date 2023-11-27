@@ -42,6 +42,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6490082237666245895}
   - component: {fileID: 866594704331055883}
+  - component: {fileID: 6056971995464264747}
   m_Layer: 8
   m_Name: Collision Box
   m_TagString: Untagged
@@ -109,6 +110,33 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 8, y: 12}
   m_EdgeRadius: 0
+--- !u!50 &6056971995464264747
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2881517228560982540}
+  m_BodyType: 2
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &4083849243589682380
 GameObject:
   m_ObjectHideFlags: 0
@@ -273,10 +301,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   direction: 0
-  walkSpeed: 0
+  walkSpeed: 2
   walkAcceleration: 0.1
   slideSpeed: 4
-  airSpeed: 3
+  airSpeed: 2
   airAcceleration: 0.05
   jumpVelocity: 4
   spriteObject: {fileID: 875735349042661111}

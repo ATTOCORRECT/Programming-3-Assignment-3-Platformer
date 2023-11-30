@@ -1,12 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class MovingPlatform : MonoBehaviour
 {
     public Transform endPositionTransform;
+
     public BoxCollider2D collisionBox;
-    Vector2 startPosition, endPosition, position, currentPosition, lastPosition, velocity, lastVelocity, acceleration, remainder;
+    public TilemapCollider2D collisionBoxT;
+
+    Vector2 startPosition, endPosition, position, currentPosition, lastPosition, velocity, acceleration, remainder;
+
     GameObject player;
     PlayerController playerController;
     BoxCollider2D playerCollisionBox;
@@ -14,18 +19,18 @@ public class MovingPlatform : MonoBehaviour
 
     void Start()
     {
-        player = GameObject.Find("Buddy");
-        playerController = player.GetComponent<PlayerController>();
-        playerCollisionBox = player.GetComponentInChildren<BoxCollider2D>();
-        playerlayer = LayerMask.GetMask("Player");
         startPosition = transform.position;
         endPosition = endPositionTransform.position;
         position = startPosition;
         currentPosition = startPosition;
         lastPosition = startPosition;
         velocity = Vector2.zero;
-        lastVelocity = Vector2.zero;
         acceleration = Vector2.zero;
+
+        player = GameObject.Find("Buddy");
+        playerController = player.GetComponent<PlayerController>();
+        playerCollisionBox = player.GetComponentInChildren<BoxCollider2D>();
+        playerlayer = LayerMask.GetMask("Player");
     }
 
     // Update is called once per frame
@@ -63,7 +68,7 @@ public class MovingPlatform : MonoBehaviour
 
         if (moveX != 0 || moveY != 0)
         {
-            bool isBeingRidden = playerController.IsRiding(gameObject);
+            bool isBeingRidden = IsBeingRidden();
             collisionBox.enabled = false;
 
             if (moveX != 0)
@@ -108,8 +113,19 @@ public class MovingPlatform : MonoBehaviour
 
             collisionBox.enabled = true;
         }
-        // HERE https://www.maddymakesgames.com/articles/celeste_and_towerfall_physics/index.html
         transform.position = position;
+    }
+
+    bool IsBeingRidden()
+    {
+        if (GameObject.Find("Buddy") != null)
+        {
+            return playerController.IsRiding(gameObject);
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public Vector2 getAcceleration()

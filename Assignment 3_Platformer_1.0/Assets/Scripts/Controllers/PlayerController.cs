@@ -17,7 +17,7 @@ public class PlayerController : MonoBehaviour
     public BoxCollider2D collisionBox;
     Vector2 collisionBoxDefaultSize, collisionBoxCrouchedSize, collisionBoxDefaultOffset, collisionBoxCrouchedOffset;
 
-    LayerMask ground;
+    LayerMask ground, semiSolid;
 
     public enum State { Default, Slide }
     State state;
@@ -38,6 +38,7 @@ public class PlayerController : MonoBehaviour
         collisionBoxCrouchedOffset = new Vector2(0, -pixel * 5);
 
         ground = LayerMask.GetMask("Ground");
+        semiSolid = LayerMask.GetMask("Semi Solid");
 
         velocity = Vector2.zero;
         position = transform.position;
@@ -113,13 +114,14 @@ public class PlayerController : MonoBehaviour
         AirControll();
         GroundFriction();
         AirResistance();
-        Squish();
 
         velocity += Vector2.down * gravity; // gravity
 
         // movement and collision handling
         MoveX(velocity.x);
         MoveY(velocity.y);
+
+        Squish();
     }
 
     RaycastHit2D collideAt(LayerMask layermask, Vector2 offset)
@@ -193,6 +195,7 @@ public class PlayerController : MonoBehaviour
 
             while (move * sign > 0)
             {
+                // normal ground
                 if (!collideAt(ground, new Vector2(0, sign)))
                 {
                     // no ground immediately beside
@@ -206,6 +209,8 @@ public class PlayerController : MonoBehaviour
                     velocity.y = 0;
                     break;
                 }
+
+                //semi solid platform
             }
         }
         transform.position = position;
@@ -227,18 +232,13 @@ public class PlayerController : MonoBehaviour
     {
         if (down && IsGrounded() && state == State.Default) // start slide
         {
-            state = State.Slide;
-
-            spriteScale = new Vector2(1.5f, 0.5f); // squish
-
-            // crouched hitbox
-            collisionBox.size = collisionBoxCrouchedSize;
-            collisionBox.offset = collisionBoxCrouchedOffset;
+            Crouch();
 
             velocity += Mathf.Clamp(-velocity.x * inputX + slideSpeed, 0, slideSpeed) * inputX * Vector2.right; // capped impulse boost
         }
 
-        if ((!down || !IsGrounded()) && state == State.Slide) // stop slide
+        bool headRoom = !collideAt(ground, Vector2.up * 6 * pixel);
+        if ((!down || !IsGrounded()) && state == State.Slide && headRoom) // stop slide
         {
             state = State.Default;
         }
@@ -248,6 +248,17 @@ public class PlayerController : MonoBehaviour
             spriteScale = Vector2.Lerp(spriteScale, Vector2.one, 0.25f); // return sprite to normal
             velocity += Mathf.Clamp(-velocity.x * inputX + slideSpeed, 0, slideSpeed * 0.01f) * inputX * Vector2.right;
         }
+    }
+
+    void Crouch()
+    {
+        state = State.Slide;
+
+        spriteScale = new Vector2(1.5f, 0.5f); // squish
+
+        // crouched hitbox
+        collisionBox.size = collisionBoxCrouchedSize;
+        collisionBox.offset = collisionBoxCrouchedOffset;
     }
 
     void Walk()
@@ -295,10 +306,14 @@ public class PlayerController : MonoBehaviour
 
     void Squish()
     {
+        if (collideAt(ground, Vector2.zero) && state == State.Slide)
+        {
+            GameObject.Destroy(gameObject);
+        }
+
         if (collideAt(ground, Vector2.zero))
         {
-            Debug.Log("Squished!");
-            //GameObject.Destroy(gameObject);
+            Crouch();
         }
     }
 

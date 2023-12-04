@@ -8,7 +8,6 @@ public class MovingPlatform : MonoBehaviour
     public Transform endPositionTransform;
 
     public BoxCollider2D collisionBox;
-    public TilemapCollider2D collisionBoxT;
 
     Vector2 startPosition, endPosition, position, currentPosition, lastPosition, velocity, acceleration, remainder;
 
@@ -36,13 +35,17 @@ public class MovingPlatform : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        
         lastPosition = currentPosition;
 
         float t = Mathf.Sin(Time.fixedTime)*0.55f + 0.5f;
         currentPosition = Vector2.Lerp(startPosition, endPosition, t);
 
         velocity = currentPosition - lastPosition;
+
+        if (IsBeingRidden()) // give player platform velocity
+        {
+            playerController.SetInheritedVelocity(velocity);
+        }
 
         Move(velocity.x, velocity.y);
     }
@@ -81,7 +84,9 @@ public class MovingPlatform : MonoBehaviour
                 if (collideAt(playerlayer, new Vector2(-moveX,0)))
                 {
                     // Push
-                    int pushX = (int)((position.x + collisionBox.size.x / 2 * signX) - (playerController.position.x - playerCollisionBox.size.x / 2 * signX));
+                    int platformEdgeX = (int)(position.x + collisionBox.size.x / 2 * signX + collisionBox.offset.x); // the left or right edge of the platform
+                    int playerEdgeX = (int)(playerController.position.x - playerCollisionBox.size.x / 2 * signX + playerCollisionBox.offset.x); // the left or right edge of the player
+                    int pushX = platformEdgeX - playerEdgeX;
                     playerController.MoveX(pushX);
                 }
                 else if (isBeingRidden)
@@ -101,7 +106,9 @@ public class MovingPlatform : MonoBehaviour
                 if (collideAt(playerlayer, new Vector2(0, -moveY)))
                 {
                     // Push
-                    int pushY = (int)((position.y + collisionBox.size.y / 2 * signY) - (playerController.position.y - playerCollisionBox.size.y / 2 * signY + playerCollisionBox.offset.y));
+                    int platformEdgeY = (int)(position.y + collisionBox.size.y / 2 * signY + collisionBox.offset.y); // the top or bottom edge of the platform
+                    int playerEdgeY = (int)(playerController.position.y - playerCollisionBox.size.y / 2 * signY + playerCollisionBox.offset.y); // the top or bottom edge of the player
+                    int pushY = (platformEdgeY - playerEdgeY);
                     playerController.MoveY(pushY);
                 }
                 else if (isBeingRidden)

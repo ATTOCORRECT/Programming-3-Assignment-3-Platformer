@@ -19,16 +19,17 @@ public class PlayerController : MonoBehaviour
 
     LayerMask ground, semiSolid;
 
-    public enum State { Default, Slide }
+    public enum State { Default, Slide, WallSlide }
     State state;
 
     bool up, left, down, right, jump, special; //input
+    int jumpBuffer = 0;
     int inputX = 0;
 
     float pixel = 1;
 
     [System.NonSerialized]
-    public Vector2 position, velocity, remainder;
+    public Vector2 position, velocity, remainder, inheritedVelocity;
 
     private void Start()
     {
@@ -41,6 +42,7 @@ public class PlayerController : MonoBehaviour
         semiSolid = LayerMask.GetMask("Semi Solid");
 
         velocity = Vector2.zero;
+        inheritedVelocity = Vector2.zero;
         position = transform.position;
     }
 
@@ -92,6 +94,7 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         Physics();
+        UpdateInput();
 
         //Debug.Log("Velocity " + velocity);
 
@@ -100,15 +103,13 @@ public class PlayerController : MonoBehaviour
         //Debug.Log("is Walking " + IsWalking());
 
         //Debug.Log("State " + state);
-
     }
 
     void Physics()
     {
-        //VelocityInheritance();
-
         Default();
         Slide();
+        WallSlide();
         Walk();
         Jump();
         AirControll();
@@ -121,10 +122,12 @@ public class PlayerController : MonoBehaviour
         MoveX(velocity.x);
         MoveY(velocity.y);
 
+        inheritedVelocity = Vector2.zero; // clear residual inherited velocity
+
         Squish();
     }
 
-    RaycastHit2D collideAt(LayerMask layermask, Vector2 offset)
+    RaycastHit2D collideAt(LayerMask layermask, Vector2 offset) // checks for a collision in the defined offset from player center and layermask
     {
         Vector2 rayOrigin = position + collisionBox.offset;
         Vector2 rayDirection = offset;
@@ -136,7 +139,7 @@ public class PlayerController : MonoBehaviour
         return hit;
     }
 
-    public void MoveX(float amount)
+    public void MoveX(float amount) // move player in the X axis
     {
         remainder.x += amount;
         int move = Mathf.RoundToInt(remainder.x);
@@ -159,12 +162,12 @@ public class PlayerController : MonoBehaviour
                     {
                         // hit ground!
 
-                        // if moving fast enough, convert horizontal vel to vertical vel
-                        if (Mathf.Abs(velocity.x) > 2) 
-                        { 
-                            float zippy = Mathf.Abs(velocity.x);
+                        // if moving fast enough and pressing a directional key, convert horizontal vel to vertical vel
+                        if (Mathf.Abs(velocity.x) > 2 && inputX != 0) 
+                        {
+                            float convertedVelocity = Mathf.Abs(velocity.x);
                             velocity.x = 0;
-                            velocity.y = zippy;
+                            velocity.y = convertedVelocity;
                         }
                         else
                         {
@@ -176,14 +179,14 @@ public class PlayerController : MonoBehaviour
             }
         }
         transform.position = position;
-    } 
+    }
 
     /* btw my justification for handling movement & collisions like this is that ive tried 2 other collision algorithms, didnt like 
      * them for what i was trying to achive, and decided that it was best that if i wanted to make a pixel precision type platformer
-     * thati should just simply follow what celeste did to make theirs. one thing led to the next and i found doccumentation and 
+     * that i should just simply follow what celeste did to make theirs. one thing led to the next and i found documentation and 
      * a blog post from maddy (dev for celeste) explaining how the collision handling works */
 
-    public void MoveY(float amount)
+    public void MoveY(float amount) // move player in the Y axis
     {
         remainder.y += amount;
         int move = Mathf.RoundToInt(remainder.y);
@@ -216,7 +219,7 @@ public class PlayerController : MonoBehaviour
         transform.position = position;
     }
 
-    void Default()
+    void Default() // default state settigns
     {
         if (state == State.Default)
         {
@@ -228,7 +231,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void Slide() // slide movement ability
+    void Slide() // handles slide movement ability
     {
         if (down && IsGrounded() && state == State.Default) // start slide
         {
@@ -250,7 +253,49 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void Crouch()
+    void WallSlide() // handles wall slide movement ability
+    {
+        bool IsTouchingWall = collideAt(ground, Vector2.left * 2) || collideAt(ground, Vector2.right * 2);
+        if(!IsGrounded() && IsTouchingWall)
+        {
+            if (velocity.y > 0) // up
+            {
+                if (BufferedJumpInput()) // wall jump up
+                {
+                    spriteScale = new Vector2(0.5f, 1.5f); // stretch
+                    velocity.y += jumpVelocity / 2;
+                    velocity.x = slideSpeed * -directionOfWall();
+                }
+            }
+
+            if (velocity.y < 0) // down
+            {
+                if (inputX != 0) // slide down
+                {
+                    velocity.y = Mathf.Lerp(velocity.y, 0, 0.25f);
+                }
+
+                if (BufferedJumpInput()) // wall jump away
+                {
+                    spriteScale = new Vector2(0.5f, 1.5f); // stretch
+                    velocity.x = slideSpeed * -directionOfWall() / 2;
+                }
+            }
+        }
+    }
+    int directionOfWall() // returns wether the contacting wall is to the left (-1) or to the right (1)
+    {
+        int direction = 0;
+        bool left = collideAt(ground, Vector2.left);
+        bool right = collideAt(ground, Vector2.right);
+
+        if (left) { direction -= 1; }
+        if (right) { direction += 1; }
+
+        return direction;
+    }
+
+    void Crouch() // crouches the player
     {
         state = State.Slide;
 
@@ -261,7 +306,7 @@ public class PlayerController : MonoBehaviour
         collisionBox.offset = collisionBoxCrouchedOffset;
     }
 
-    void Walk()
+    void Walk() // handles walking
     {
         if (IsGrounded() && state == State.Default)
         {
@@ -269,15 +314,19 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void Jump()
+    void Jump() // handles jumping
     {
-        if (IsGrounded() && jump)
+        if (IsGrounded() && BufferedJumpInput())
         {
             spriteScale = new Vector2(0.5f, 1.5f); // stretch
-            velocity.y = 4;
+
+            velocity.y = jumpVelocity + inheritedVelocity.y;
+            velocity.x += inheritedVelocity.x;
+
         }
     }
-    void AirControll()
+
+    void AirControll() // handles air controll
     {
         if (!IsGrounded())
         {
@@ -285,7 +334,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void GroundFriction()
+    void GroundFriction() // handles ground friction
     {
         // if ( no x input or x velocity is greater than walk speed ) && grounded && default state
         if ((inputX == 0 || Mathf.Abs(velocity.x) > walkSpeed) && IsGrounded() && state == State.Default)
@@ -294,7 +343,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void AirResistance()
+    void AirResistance() // handles air resistance
     {
         // player is trying to resist movement or isnt moving && they havent hit critical airspeed (no resistance) && is in the air && default state
         // if the input dir doesnt match the velocity dir && horizontal velocity is less than 1.5x the max airspeed && not grounded && default state
@@ -326,19 +375,46 @@ public class PlayerController : MonoBehaviour
             if (right) { direction = FacingDirection.Right; }
         }
     }
+
     void PlayerInput()
     {
-        //up    = Input.GetKey(KeyCode.W);
+        //up    = Input.GetKey(KeyCode.W); 
         left  = Input.GetKey(KeyCode.A); // move left
         down  = Input.GetKey(KeyCode.S); // slide
         right = Input.GetKey(KeyCode.D); // move right
 
-        jump   = Input.GetKey(KeyCode.Space); // jump
-
+        if (!jump)
+        {
+            jump = Input.GetKeyDown(KeyCode.Space); // jump
+        }
+        
         //special = Input.GetKey(KeyCode.LeftShift);
 
         inputX = 0; // x input as an int. -1 left, 0 nothing, 1 right.
         if (left) { inputX -= 1; }
         if (right) { inputX += 1; }
+    }
+
+    bool BufferedJumpInput()
+    {
+        if (jumpBuffer > 0)
+        {
+            jumpBuffer = 0;
+            return true;
+        }
+        return false;
+    }
+
+    void UpdateInput()
+    {
+        if (jump) { jumpBuffer = 10; }
+        if (jumpBuffer > 0) { jumpBuffer -= 1; }
+
+        jump = false;
+    }
+
+    public void SetInheritedVelocity(Vector2 inheritedVelocity)
+    {
+        this.inheritedVelocity = inheritedVelocity;
     }
 }

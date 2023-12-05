@@ -9,6 +9,9 @@ public class MovingPlatform : MonoBehaviour
 
     public BoxCollider2D collisionBox;
 
+    public float Speed = 0.5f;
+    public float frequency = 1;
+
     Vector2 startPosition, endPosition, position, currentPosition, lastPosition, velocity, acceleration, remainder;
 
     GameObject player;
@@ -37,7 +40,7 @@ public class MovingPlatform : MonoBehaviour
     {
         lastPosition = currentPosition;
 
-        float t = Mathf.Sin(Time.fixedTime)*0.55f + 0.5f;
+        float t = Mathf.Sin(Time.fixedTime * frequency) * Speed + 0.5f;
         currentPosition = Vector2.Lerp(startPosition, endPosition, t);
 
         velocity = currentPosition - lastPosition;

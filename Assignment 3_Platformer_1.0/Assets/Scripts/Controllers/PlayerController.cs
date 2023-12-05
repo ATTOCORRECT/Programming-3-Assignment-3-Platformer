@@ -255,7 +255,7 @@ public class PlayerController : MonoBehaviour
 
     void WallSlide() // handles wall slide movement ability
     {
-        bool IsTouchingWall = collideAt(ground, Vector2.left * 2) || collideAt(ground, Vector2.right * 2);
+        bool IsTouchingWall = collideAt(ground, Vector2.left) || collideAt(ground, Vector2.right);
         if(!IsGrounded() && IsTouchingWall)
         {
             if (velocity.y > 0) // up
@@ -270,7 +270,7 @@ public class PlayerController : MonoBehaviour
 
             if (velocity.y < 0) // down
             {
-                if (inputX != 0) // slide down
+                if (inputX == directionOfWall()) // slide down
                 {
                     velocity.y = Mathf.Lerp(velocity.y, 0, 0.25f);
                 }
@@ -278,7 +278,7 @@ public class PlayerController : MonoBehaviour
                 if (BufferedJumpInput()) // wall jump away
                 {
                     spriteScale = new Vector2(0.5f, 1.5f); // stretch
-                    velocity.x = slideSpeed * -directionOfWall() / 2;
+                    velocity.x = slideSpeed * -directionOfWall();
                 }
             }
         }

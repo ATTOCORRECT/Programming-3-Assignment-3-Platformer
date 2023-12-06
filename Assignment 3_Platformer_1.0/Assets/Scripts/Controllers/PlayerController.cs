@@ -23,7 +23,7 @@ public class PlayerController : MonoBehaviour
     State state;
 
     bool up, left, down, right, jump, special; //input
-    int jumpBuffer = 0;
+    int jumpBuffer = 0, groundCoyoteCounter = 0, wallCoyoteCounter = 0;
     int inputX = 0;
 
     float pixel = 1;
@@ -39,7 +39,6 @@ public class PlayerController : MonoBehaviour
         collisionBoxCrouchedOffset = new Vector2(0, -pixel * 5);
 
         ground = LayerMask.GetMask("Ground");
-        semiSolid = LayerMask.GetMask("Semi Solid");
 
         velocity = Vector2.zero;
         inheritedVelocity = Vector2.zero;
@@ -48,7 +47,7 @@ public class PlayerController : MonoBehaviour
 
     public bool IsWalking()
     {
-        if (IsGrounded() && (left || right) && Mathf.Abs(velocity.x) > 0)
+        if (IsGrounded() && inputX != 0)
         {
             return true;
         }
@@ -61,6 +60,15 @@ public class PlayerController : MonoBehaviour
     public bool IsGrounded()
     {
         return collideAt(ground, Vector2.down);
+    }
+
+    public bool IsCoyoteGrounded()
+    {
+        if (groundCoyoteCounter > 0)
+        {
+            return true;
+        }
+        return false;
     }
 
     public bool IsRiding(GameObject solid)
@@ -95,6 +103,7 @@ public class PlayerController : MonoBehaviour
     {
         Physics();
         UpdateInput();
+        UpdateCoyote();
 
         //Debug.Log("Velocity " + velocity);
 
@@ -103,6 +112,8 @@ public class PlayerController : MonoBehaviour
         //Debug.Log("is Walking " + IsWalking());
 
         //Debug.Log("State " + state);
+
+        //Debug.Log(groundCoyoteCounter);
     }
 
     void Physics()
@@ -181,11 +192,6 @@ public class PlayerController : MonoBehaviour
         transform.position = position;
     }
 
-    /* btw my justification for handling movement & collisions like this is that ive tried 2 other collision algorithms, didnt like 
-     * them for what i was trying to achive, and decided that it was best that if i wanted to make a pixel precision type platformer
-     * that i should just simply follow what celeste did to make theirs. one thing led to the next and i found documentation and 
-     * a blog post from maddy (dev for celeste) explaining how the collision handling works */
-
     public void MoveY(float amount) // move player in the Y axis
     {
         remainder.y += amount;
@@ -219,6 +225,11 @@ public class PlayerController : MonoBehaviour
         transform.position = position;
     }
 
+    /* btw my justification for handling movement & collisions like this is that ive tried 2 other collision algorithms, didnt like 
+     * them for what i was trying to achive, and decided that it was best that if i wanted to make a pixel precision type platformer
+     * that i should just simply follow what celeste did to make theirs. one thing led to the next and i found documentation and 
+     * a blog post from maddy (dev for celeste) explaining how the collision handling works */
+
     void Default() // default state settigns
     {
         if (state == State.Default)
@@ -240,7 +251,7 @@ public class PlayerController : MonoBehaviour
             velocity += Mathf.Clamp(-velocity.x * inputX + slideSpeed, 0, slideSpeed) * inputX * Vector2.right; // capped impulse boost
         }
 
-        bool headRoom = !collideAt(ground, Vector2.up * 6 * pixel);
+        bool headRoom = !collideAt(ground, Vector2.up * 6 * pixel); // is there room above my head to uncrouch?
         if ((!down || !IsGrounded()) && state == State.Slide && headRoom) // stop slide
         {
             state = State.Default;
@@ -249,14 +260,13 @@ public class PlayerController : MonoBehaviour
         if (state == State.Slide) // sliding
         {
             spriteScale = Vector2.Lerp(spriteScale, Vector2.one, 0.25f); // return sprite to normal
-            velocity += Mathf.Clamp(-velocity.x * inputX + slideSpeed, 0, slideSpeed * 0.01f) * inputX * Vector2.right;
+            velocity += Mathf.Clamp(-velocity.x * inputX + slideSpeed, 0, slideSpeed * 0.01f) * inputX * Vector2.right; // capped slide boost
         }
     }
 
     void WallSlide() // handles wall slide movement ability
     {
-        bool IsTouchingWall = collideAt(ground, Vector2.left) || collideAt(ground, Vector2.right);
-        if(!IsGrounded() && IsTouchingWall)
+        if(!IsGrounded() && IsTouchingWall())
         {
             if (velocity.y > 0) // up
             {
@@ -264,13 +274,13 @@ public class PlayerController : MonoBehaviour
                 {
                     spriteScale = new Vector2(0.5f, 1.5f); // stretch
                     velocity.y += jumpVelocity / 2;
-                    velocity.x = slideSpeed * -directionOfWall();
+                    velocity.x = slideSpeed * -DirectionOfWall();
                 }
             }
 
             if (velocity.y < 0) // down
             {
-                if (inputX == directionOfWall()) // slide down
+                if (inputX == DirectionOfWall()) // slide down
                 {
                     velocity.y = Mathf.Lerp(velocity.y, 0, 0.25f);
                 }
@@ -278,12 +288,17 @@ public class PlayerController : MonoBehaviour
                 if (BufferedJumpInput()) // wall jump away
                 {
                     spriteScale = new Vector2(0.5f, 1.5f); // stretch
-                    velocity.x = slideSpeed * -directionOfWall();
+                    velocity.x = slideSpeed * -DirectionOfWall();
                 }
             }
         }
     }
-    int directionOfWall() // returns wether the contacting wall is to the left (-1) or to the right (1)
+
+    bool IsTouchingWall()
+    {
+        return collideAt(ground, Vector2.left) || collideAt(ground, Vector2.right);
+    }
+    int DirectionOfWall() // returns wether the contacting wall is to the left (-1) or to the right (1) or if there are two walls (0)
     {
         int direction = 0;
         bool left = collideAt(ground, Vector2.left);
@@ -316,8 +331,10 @@ public class PlayerController : MonoBehaviour
 
     void Jump() // handles jumping
     {
-        if (IsGrounded() && BufferedJumpInput())
+        if (IsCoyoteGrounded() && BufferedJumpInput())
         {
+            groundCoyoteCounter = 0; // reset coyote time
+
             spriteScale = new Vector2(0.5f, 1.5f); // stretch
 
             velocity.y = jumpVelocity + inheritedVelocity.y;
@@ -346,8 +363,8 @@ public class PlayerController : MonoBehaviour
     void AirResistance() // handles air resistance
     {
         // player is trying to resist movement or isnt moving && they havent hit critical airspeed (no resistance) && is in the air && default state
-        // if the input dir doesnt match the velocity dir && horizontal velocity is less than 1.5x the max airspeed && not grounded && default state
-        if (inputX * Mathf.Sign(velocity.x) <= 0 && velocity.x * Mathf.Sign(inputX) < airSpeed * 1.5f && !IsGrounded() && state == State.Default) // this line is kinda hard to follow, hopefully the 2 explinations help
+        // if the input dir doesnt match the velocity dir && horizontal velocity is less than 2.2x the max airspeed && not grounded && default state
+        if ((inputX * Mathf.Sign(velocity.x) <= 0) && (Mathf.Abs(velocity.x) < airSpeed * 2.2f) && !IsGrounded() && (state == State.Default)) // this line is kinda hard to follow, hopefully the 2 explinations help
         {
             velocity.x = Mathf.Lerp(velocity.x, 0, 0.05f);
         }
@@ -407,10 +424,23 @@ public class PlayerController : MonoBehaviour
 
     void UpdateInput()
     {
-        if (jump) { jumpBuffer = 10; }
+        if (jump) { jumpBuffer = 10; } // half second
         if (jumpBuffer > 0) { jumpBuffer -= 1; }
 
         jump = false;
+    }
+
+    void UpdateCoyote()
+    {
+        if (IsGrounded())
+        {
+            groundCoyoteCounter = 5; // quarter second
+        } 
+        else if (groundCoyoteCounter > 0)
+        {
+            groundCoyoteCounter -= 1;
+        }
+
     }
 
     public void SetInheritedVelocity(Vector2 inheritedVelocity)

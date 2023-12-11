@@ -319,6 +319,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1729448064}
     m_Modifications:
+    - target: {fileID: 1378919887321353339, guid: af9f25ef94a2a434692f18ad6bd1010a,
+        type: 3}
+      propertyPath: frequency
+      value: 0.05
+      objectReference: {fileID: 0}
     - target: {fileID: 1889661659140444245, guid: af9f25ef94a2a434692f18ad6bd1010a,
         type: 3}
       propertyPath: m_Size.x
@@ -2108,6 +2113,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Moving Platform Squisher
       objectReference: {fileID: 0}
+    - target: {fileID: 3056841725591934119, guid: af9f25ef94a2a434692f18ad6bd1010a,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4202914286635609714, guid: af9f25ef94a2a434692f18ad6bd1010a,
         type: 3}
       propertyPath: m_Size.x
@@ -2136,6 +2146,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1729448064}
     m_Modifications:
+    - target: {fileID: 1378919887321353339, guid: af9f25ef94a2a434692f18ad6bd1010a,
+        type: 3}
+      propertyPath: frequency
+      value: 0.05
+      objectReference: {fileID: 0}
     - target: {fileID: 2350425587286204654, guid: af9f25ef94a2a434692f18ad6bd1010a,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -2190,6 +2205,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Moving Platform Pusher
+      objectReference: {fileID: 0}
+    - target: {fileID: 3056841725591934119, guid: af9f25ef94a2a434692f18ad6bd1010a,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5465997615328649001, guid: af9f25ef94a2a434692f18ad6bd1010a,
         type: 3}
@@ -2382,6 +2402,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1729448064}
     m_Modifications:
+    - target: {fileID: 1378919887321353339, guid: af9f25ef94a2a434692f18ad6bd1010a,
+        type: 3}
+      propertyPath: frequency
+      value: 0.05
+      objectReference: {fileID: 0}
     - target: {fileID: 1889661659140444245, guid: af9f25ef94a2a434692f18ad6bd1010a,
         type: 3}
       propertyPath: m_Size.x
@@ -4171,6 +4196,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Moving Platform Crusher
       objectReference: {fileID: 0}
+    - target: {fileID: 3056841725591934119, guid: af9f25ef94a2a434692f18ad6bd1010a,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4202914286635609714, guid: af9f25ef94a2a434692f18ad6bd1010a,
         type: 3}
       propertyPath: m_Size.x
@@ -4208,12 +4238,12 @@ PrefabInstance:
     - target: {fileID: 1378919887321353339, guid: af9f25ef94a2a434692f18ad6bd1010a,
         type: 3}
       propertyPath: Speed
-      value: 0.75
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1378919887321353339, guid: af9f25ef94a2a434692f18ad6bd1010a,
         type: 3}
       propertyPath: frequency
-      value: 10
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 1889661659140444245, guid: af9f25ef94a2a434692f18ad6bd1010a,
         type: 3}
@@ -5918,6 +5948,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Moving Platform Launcher
+      objectReference: {fileID: 0}
+    - target: {fileID: 3056841725591934119, guid: af9f25ef94a2a434692f18ad6bd1010a,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4202914286635609714, guid: af9f25ef94a2a434692f18ad6bd1010a,
         type: 3}
@@ -73031,6 +73066,11 @@ PrefabInstance:
         type: 3}
       propertyPath: Speed
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1378919887321353339, guid: af9f25ef94a2a434692f18ad6bd1010a,
+        type: 3}
+      propertyPath: frequency
+      value: 0.05
       objectReference: {fileID: 0}
     - target: {fileID: 1889661659140444245, guid: af9f25ef94a2a434692f18ad6bd1010a,
         type: 3}

@@ -47,7 +47,7 @@ public class PlayerController : MonoBehaviour
 
     public bool IsWalking()
     {
-        if (IsGrounded() && inputX != 0)
+        if (IsGrounded() && (inputX != 0 || velocity.x != 0))
         {
             return true;
         }
@@ -97,6 +97,8 @@ public class PlayerController : MonoBehaviour
         PlayerInput();
 
         spriteObject.transform.localScale = new Vector2(Mathf.Round(spriteScale.x * 8) / 8, Mathf.Round(spriteScale.y * 8) / 8); // pixel perfect!
+
+        
     }
 
     private void FixedUpdate()

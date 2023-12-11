@@ -19,6 +19,8 @@ public class MovingPlatform : MonoBehaviour
     BoxCollider2D playerCollisionBox;
     LayerMask playerlayer;
 
+    float cycle = 0;
+
     void Start()
     {
         startPosition = transform.position;
@@ -40,7 +42,7 @@ public class MovingPlatform : MonoBehaviour
     {
         lastPosition = currentPosition;
 
-        float t = Mathf.Sin(Time.fixedTime * frequency) * Speed + 0.5f;
+        float t = Mathf.Clamp01(Mathf.Sin(cycle * 2 * Mathf.PI) * Speed + 0.5f);
         currentPosition = Vector2.Lerp(startPosition, endPosition, t);
 
         velocity = currentPosition - lastPosition;
@@ -51,6 +53,9 @@ public class MovingPlatform : MonoBehaviour
         }
 
         Move(velocity.x, velocity.y);
+
+        cycle += 0.05f * frequency;
+        cycle %= 1;
     }
 
     RaycastHit2D collideAt(LayerMask layermask, Vector2 offset)

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -13,6 +14,8 @@ public class MovingPlatform : MonoBehaviour
     public float frequency = 1;
 
     Vector2 startPosition, endPosition, position, currentPosition, lastPosition, velocity, acceleration, remainder;
+
+    List<Vector2> largestRecentVelocity = new List<Vector2>();
 
     GameObject player;
     PlayerController playerController;
@@ -47,9 +50,16 @@ public class MovingPlatform : MonoBehaviour
 
         velocity = currentPosition - lastPosition;
 
+        // record velocity
+        largestRecentVelocity.Add(velocity);
+
+        // remove old recorded velocity
+        int maxSize = 2;
+        if (largestRecentVelocity.Count > maxSize) largestRecentVelocity.RemoveAt(maxSize);
+
         if (IsBeingRidden()) // give player platform velocity
         {
-            playerController.SetInheritedVelocity(velocity);
+            playerController.SetInheritedVelocity(getLargestRecentVelocity());
         }
 
         Move(velocity.x, velocity.y);
@@ -150,5 +160,17 @@ public class MovingPlatform : MonoBehaviour
     public Vector2 getVelocity()
     {
         return velocity;
+    }
+    float Magnitude(Vector3 vector) // used exclusively for sorting
+    {
+        return vector.magnitude;
+    }
+
+    // Sort vectors by magnitude
+    Vector2 getLargestRecentVelocity()
+    {
+        List<Vector2> recentVelocitiesCopy = new List<Vector2>(largestRecentVelocity);
+        recentVelocitiesCopy.Sort((v1, v2) => Magnitude(v1).CompareTo(Magnitude(v2)));
+        return recentVelocitiesCopy[0];
     }
 }

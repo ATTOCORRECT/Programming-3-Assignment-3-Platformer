@@ -54,8 +54,8 @@ public class MovingPlatform : MonoBehaviour
         largestRecentVelocity.Add(velocity);
 
         // remove old recorded velocity
-        int maxSize = 2;
-        if (largestRecentVelocity.Count > maxSize) largestRecentVelocity.RemoveAt(maxSize);
+        int maxSize = 8;
+        if (largestRecentVelocity.Count > maxSize) largestRecentVelocity.RemoveAt(0);
 
         if (IsBeingRidden()) // give player platform velocity
         {
@@ -170,7 +170,7 @@ public class MovingPlatform : MonoBehaviour
     Vector2 getLargestRecentVelocity()
     {
         List<Vector2> recentVelocitiesCopy = new List<Vector2>(largestRecentVelocity);
-        recentVelocitiesCopy.Sort((v1, v2) => Magnitude(v1).CompareTo(Magnitude(v2)));
+        recentVelocitiesCopy.Sort((v1, v2) => Magnitude(v2).CompareTo(Magnitude(v1)));
         return recentVelocitiesCopy[0];
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -8,7 +9,7 @@ public class PlayerController : MonoBehaviour
     public enum FacingDirection { Left, Right }
     public FacingDirection direction;
 
-    public float walkSpeed, walkAcceleration, slideSpeed, airSpeed, airAcceleration, jumpVelocity;
+    public float walkSpeed, walkAcceleration, slideSpeed, airSpeed, airAcceleration, jumpVelocity, variableJumpSpeed;
     float gravity = 0.2f;
 
     public GameObject spriteObject;
@@ -17,13 +18,13 @@ public class PlayerController : MonoBehaviour
     public BoxCollider2D collisionBox;
     Vector2 collisionBoxDefaultSize, collisionBoxCrouchedSize, collisionBoxDefaultOffset, collisionBoxCrouchedOffset;
 
-    LayerMask ground, semiSolid;
+    LayerMask ground;//, semiSolid;
 
     public enum State { Default, Slide, WallSlide }
     State state;
 
-    bool up, left, down, right, jump, special; //input
-    int jumpBuffer = 0, groundCoyoteCounter = 0, wallCoyoteCounter = 0;
+    bool up, left, down, right, jump, jumping, special; //input
+    int jumpBuffer = 0, groundCoyoteCounter = 0, variableJumpTimer = 0;//, wallCoyoteCounter = 0;
     int inputX = 0;
 
     float pixel = 1;
@@ -106,6 +107,7 @@ public class PlayerController : MonoBehaviour
         Physics();
         UpdateInput();
         UpdateCoyote();
+        
 
         //Debug.Log("Velocity " + velocity);
 
@@ -124,11 +126,12 @@ public class PlayerController : MonoBehaviour
         //Slide();
         WallSlide();
         Walk();
+        VariableJump();
         Jump();
         AirControll();
         GroundFriction();
         AirResistance();
-
+        Gravity();
         velocity += Vector2.down * gravity; // gravity
 
         // movement and collision handling
@@ -268,8 +271,8 @@ public class PlayerController : MonoBehaviour
         if (BufferedJumpInput()) // wall jump up
         {
             spriteScale = new Vector2(0.5f, 1.5f); // stretch
-            velocity.y += jumpVelocity * 0.75f;
-            velocity.x = slideSpeed * -DirectionOfWall();
+            velocity.y = jumpVelocity;
+            velocity.x = walkSpeed * 1 * -DirectionOfWall();
         }
 
     }
@@ -348,6 +351,9 @@ public class PlayerController : MonoBehaviour
         {
             velocity.x = Mathf.Lerp(velocity.x, 0, 0.05f);
         }
+
+        // terminal velocity
+        velocity.y = Mathf.Max(velocity.y, -2 * walkSpeed);
     }
 
     void Squish()
@@ -384,7 +390,8 @@ public class PlayerController : MonoBehaviour
         {
             jump = Input.GetKeyDown(KeyCode.Space); // jump
         }
-        
+        jumping = Input.GetKey(KeyCode.Space); // jump
+
         //special = Input.GetKey(KeyCode.LeftShift);
 
         inputX = 0; // x input as an int. -1 left, 0 nothing, 1 right.
@@ -397,6 +404,7 @@ public class PlayerController : MonoBehaviour
         if (jumpBuffer > 0)
         {
             jumpBuffer = 0;
+            variableJumpTimer = 4;
             return true;
         }
         return false;
@@ -421,6 +429,33 @@ public class PlayerController : MonoBehaviour
             groundCoyoteCounter -= 1;
         }
 
+    }
+
+    void VariableJump() {
+        if (variableJumpTimer > 0)
+        {
+            if (jumping)
+                velocity.y = Mathf.Max(velocity.y, variableJumpSpeed);
+            else
+                variableJumpTimer = 0;
+        }
+
+        variableJumpTimer -= 1;
+    }
+
+    void Gravity()
+    {
+        if (!IsGrounded())
+        {
+            float halfGravityThreshold = 2;
+            float multiplier = (Mathf.Abs(velocity.y) < halfGravityThreshold && jumping) ? 0.5f : 1f;
+
+
+            //velocity.y = Mathf.Lerp(velocity.y, -12, gravity * multiplier);
+
+            velocity.y -= gravity * multiplier;
+            velocity.y = Mathf.Max(velocity.y, -12);
+        }
     }
 
     public void SetInheritedVelocity(Vector2 inheritedVelocity)

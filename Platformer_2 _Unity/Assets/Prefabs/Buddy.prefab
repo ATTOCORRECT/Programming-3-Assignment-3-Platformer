@@ -301,12 +301,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   direction: 0
-  walkSpeed: 2
+  walkSpeed: 3
   walkAcceleration: 0.1
   slideSpeed: 4
   airSpeed: 2
   airAcceleration: 0.05
-  jumpVelocity: 4
+  jumpVelocity: 3
+  variableJumpSpeed: 4
   spriteObject: {fileID: 875735349042661111}
   collisionBox: {fileID: 866594704331055883}
 --- !u!114 &1779115182464560856
@@ -323,3 +324,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defualt: {fileID: 1912720162, guid: f1385510cde8b9c449e8d204434bcce4, type: 3}
   crouched: {fileID: 356284753, guid: f1385510cde8b9c449e8d204434bcce4, type: 3}
+  wall: {fileID: 0}

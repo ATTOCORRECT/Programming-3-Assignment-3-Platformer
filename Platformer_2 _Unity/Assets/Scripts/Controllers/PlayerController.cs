@@ -24,7 +24,7 @@ public class PlayerController : MonoBehaviour
     State state;
 
     bool up, left, down, right, jump, jumping, special; //input
-    int jumpBuffer = 0, groundCoyoteCounter = 0, variableJumpTimer = 0;//, wallCoyoteCounter = 0;
+    int jumpBuffer = 0, groundCoyoteCounter = 0, variableJumpTimer = 0, wallCoyoteCounter = 0;
     int inputX = 0;
 
     float pixel = 1;
@@ -63,9 +63,22 @@ public class PlayerController : MonoBehaviour
         return collideAt(ground, Vector2.down);
     }
 
+    public bool IsTouchingWall()
+    {
+        return collideAt(ground, Vector2.right) || collideAt(ground, Vector2.left);
+    }
+
     public bool IsCoyoteGrounded()
     {
         if (groundCoyoteCounter > 0)
+        {
+            return true;
+        }
+        return false;
+    }
+    public bool IsWallCoyoteGrounded()
+    {
+        if (wallCoyoteCounter > 0)
         {
             return true;
         }
@@ -107,7 +120,7 @@ public class PlayerController : MonoBehaviour
         Physics();
         UpdateInput();
         UpdateCoyote();
-        
+        UpdateWallCoyote();
 
         //Debug.Log("Velocity " + velocity);
 
@@ -124,10 +137,11 @@ public class PlayerController : MonoBehaviour
     {
         Default();
         //Slide();
-        WallSlide();
         Walk();
+        WallSlide();
         VariableJump();
         Jump();
+        WallJump();
         AirControll();
         GroundFriction();
         AirResistance();
@@ -258,7 +272,7 @@ public class PlayerController : MonoBehaviour
 
     void WallSlide() // handles wall slide movement ability
     {
-        if (!(!IsGrounded() && IsTouchingWall()))
+        if (IsGrounded() || !IsTouchingWall())
         {
             return;
         }
@@ -267,19 +281,30 @@ public class PlayerController : MonoBehaviour
         {
             velocity.y = Mathf.Lerp(velocity.y, 0, 0.25f);
         } 
-
-        if (BufferedJumpInput()) // wall jump up
-        {
-            spriteScale = new Vector2(0.5f, 1.5f); // stretch
-            velocity.y = jumpVelocity;
-            velocity.x = walkSpeed * 1 * -DirectionOfWall();
-        }
-
     }
 
-    bool IsTouchingWall()
+    void WallJump()
     {
-        return collideAt(ground, Vector2.left) || collideAt(ground, Vector2.right);
+        if (IsWallCoyoteGrounded() && !IsGrounded() && BufferedJumpInput()) // wall jump up
+        {
+            Debug.Log("Wall Jump");
+            wallCoyoteCounter = 0;
+
+            spriteScale = new Vector2(0.5f, 1.5f); // stretch
+            velocity.y = jumpVelocity;
+            int wallDirection = DirectionOfWall();
+
+            if (wallDirection == 0)
+            {
+                velocity.x = walkSpeed * 1 * inputX;
+            } 
+            else
+            {
+                Debug.Log(-wallDirection);
+                velocity.x = walkSpeed * 1 * -wallDirection;
+                SetDirectionFromInt(-wallDirection);
+            }
+        }
     }
 
     int DirectionOfWall() // returns wether the contacting wall is to the left (-1) or to the right (1) or if there are two walls (0)
@@ -317,6 +342,7 @@ public class PlayerController : MonoBehaviour
     {
         if (IsCoyoteGrounded() && BufferedJumpInput())
         {
+            Debug.Log("Jump");
             groundCoyoteCounter = 0; // reset coyote time
 
             spriteScale = new Vector2(0.5f, 1.5f); // stretch
@@ -379,6 +405,15 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void SetDirectionFromInt(int directionInt)
+    {
+        //if(directionInt != 1 || directionInt != -1) { return;}
+
+        if(directionInt == 1) { direction = FacingDirection.Right; }
+
+        if (directionInt == -1) { direction = FacingDirection.Left; }
+    }
+
     void PlayerInput()
     {
         //up    = Input.GetKey(KeyCode.W); 
@@ -427,6 +462,19 @@ public class PlayerController : MonoBehaviour
         else if (groundCoyoteCounter > 0)
         {
             groundCoyoteCounter -= 1;
+        }
+
+    }
+
+    void UpdateWallCoyote()
+    {
+        if (IsTouchingWall())
+        {
+            wallCoyoteCounter = 5; // quarter second
+        }
+        else if (wallCoyoteCounter > 0)
+        {
+            wallCoyoteCounter -= 1;
         }
 
     }

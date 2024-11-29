@@ -80,6 +80,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   endPositionTransform: {fileID: 5465997615328649001}
   collisionBox: {fileID: 4202914286635609714}
+  Speed: 0.5
+  frequency: 1
 --- !u!61 &4202914286635609714
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -258,13 +260,13 @@ Tilemap:
     m_Data: {fileID: 11400000, guid: 0af4615311f68174f9325b05951d12c9, type: 2}
   m_TileSpriteArray:
   - m_RefCount: 1
-    m_Data: {fileID: -1179616812, guid: 3ad6496084772e646ade3670b68c5a92, type: 3}
+    m_Data: {fileID: -1986433043, guid: ae622c5cce12fba42b6268ad1a991242, type: 3}
   - m_RefCount: 1
-    m_Data: {fileID: 126680487, guid: 3ad6496084772e646ade3670b68c5a92, type: 3}
+    m_Data: {fileID: -62802792, guid: ae622c5cce12fba42b6268ad1a991242, type: 3}
   - m_RefCount: 1
-    m_Data: {fileID: -1217586956, guid: 3ad6496084772e646ade3670b68c5a92, type: 3}
+    m_Data: {fileID: -1226940637, guid: ae622c5cce12fba42b6268ad1a991242, type: 3}
   - m_RefCount: 1
-    m_Data: {fileID: 826280045, guid: 3ad6496084772e646ade3670b68c5a92, type: 3}
+    m_Data: {fileID: -527415279, guid: ae622c5cce12fba42b6268ad1a991242, type: 3}
   m_TileMatrixArray:
   - m_RefCount: 4
     m_Data:
@@ -289,7 +291,7 @@ Tilemap:
     m_Data: {r: 1, g: 1, b: 1, a: 1}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
-  m_Color: {r: 0.6666667, g: 0.8980392, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: -1, y: -1, z: 0}
   m_Size: {x: 2, y: 2, z: 1}
   m_TileAnchor: {x: 0.5, y: 0.5, z: 0}

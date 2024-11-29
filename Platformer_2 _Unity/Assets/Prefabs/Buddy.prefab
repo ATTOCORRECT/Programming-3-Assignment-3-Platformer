@@ -147,6 +147,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9101096807214732178}
   - component: {fileID: 5292243469904888259}
+  - component: {fileID: 7679749165014331050}
   m_Layer: 8
   m_Name: Sprite
   m_TagString: Untagged
@@ -210,7 +211,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 2
-  m_Sprite: {fileID: 1912720162, guid: f1385510cde8b9c449e8d204434bcce4, type: 3}
+  m_Sprite: {fileID: 1133442205, guid: fd1bd1b4714eb954dabd85d0bd3396fa, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -221,6 +222,27 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!95 &7679749165014331050
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4083849243589682380}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 02faec3036f63cf4190b2bbb8623836f, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &6709087105085048005
 GameObject:
   m_ObjectHideFlags: 0
@@ -303,7 +325,7 @@ MonoBehaviour:
   direction: 0
   walkSpeed: 3
   walkAcceleration: 0.1
-  slideSpeed: 4
+  crouchSpeed: 1
   airSpeed: 2
   airAcceleration: 0.05
   jumpVelocity: 3
@@ -322,6 +344,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c97e26b1edd7b946b59097ccc1b8445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defualt: {fileID: 1912720162, guid: f1385510cde8b9c449e8d204434bcce4, type: 3}
-  crouched: {fileID: 356284753, guid: f1385510cde8b9c449e8d204434bcce4, type: 3}
-  wall: {fileID: 0}
+  defualt: {fileID: 1133442205, guid: fd1bd1b4714eb954dabd85d0bd3396fa, type: 3}
+  crouched: {fileID: -1838289436, guid: fd1bd1b4714eb954dabd85d0bd3396fa, type: 3}
+  wall: {fileID: -566452676, guid: fd1bd1b4714eb954dabd85d0bd3396fa, type: 3}
+  jump: {fileID: 536809499, guid: fd1bd1b4714eb954dabd85d0bd3396fa, type: 3}

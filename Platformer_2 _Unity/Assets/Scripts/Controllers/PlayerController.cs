@@ -9,7 +9,7 @@ public class PlayerController : MonoBehaviour
     public enum FacingDirection { Left, Right }
     public FacingDirection direction;
 
-    public float walkSpeed, walkAcceleration, slideSpeed, airSpeed, airAcceleration, jumpVelocity, variableJumpSpeed;
+    public float walkSpeed, walkAcceleration, crouchSpeed, airSpeed, airAcceleration, jumpVelocity, variableJumpSpeed;
     float gravity = 0.2f;
 
     public GameObject spriteObject;
@@ -20,8 +20,10 @@ public class PlayerController : MonoBehaviour
 
     LayerMask ground;//, semiSolid;
 
-    public enum State { Default, Slide, WallSlide }
-    State state;
+    public enum AbilityState { Default, Crouch }
+    AbilityState abilityState;
+    public enum GraphicsState { Idle, Crouch, Jump, WallSlide, Walking , CrouchWalking }
+    GraphicsState graphicsState;
 
     bool up, left, down, right, jump, jumping, special; //input
     int jumpBuffer = 0, groundCoyoteCounter = 0, variableJumpTimer = 0, wallCoyoteCounter = 0;
@@ -95,9 +97,9 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
-    public State GetState()
+    public GraphicsState GetGraphicsState()
     {
-        return state;
+        return graphicsState;
     }
 
     public FacingDirection GetFacingDirection()
@@ -111,8 +113,6 @@ public class PlayerController : MonoBehaviour
         PlayerInput();
 
         spriteObject.transform.localScale = new Vector2(Mathf.Round(spriteScale.x * 8) / 8, Mathf.Round(spriteScale.y * 8) / 8); // pixel perfect!
-
-        
     }
 
     private void FixedUpdate()
@@ -122,6 +122,7 @@ public class PlayerController : MonoBehaviour
         UpdateCoyote();
         UpdateWallCoyote();
 
+        UpdateGraphics();
         //Debug.Log("Velocity " + velocity);
 
         //Debug.Log("is Grounded " + IsGrounded());
@@ -136,7 +137,7 @@ public class PlayerController : MonoBehaviour
     void Physics()
     {
         Default();
-        //Slide();
+        CrouchAbility();
         Walk();
         WallSlide();
         VariableJump();
@@ -154,7 +155,7 @@ public class PlayerController : MonoBehaviour
 
         inheritedVelocity = Vector2.zero; // clear residual inherited velocity
 
-        //Squish();
+        Squish();
     }
 
     RaycastHit2D collideAt(LayerMask layermask, Vector2 offset) // checks for a collision in the defined offset from player center and layermask
@@ -238,7 +239,7 @@ public class PlayerController : MonoBehaviour
 
     void Default() // default state settigns
     {
-        if (state == State.Default)
+        if (abilityState == AbilityState.Default)
         {
             spriteScale = Vector2.Lerp(spriteScale, Vector2.one, 0.25f); // return sprite to normal
 
@@ -248,39 +249,47 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void Slide() // handles slide movement ability // unused
+    void CrouchAbility() // handles crouch movement ability
     {
-        if (down && IsGrounded() && state == State.Default) // start slide
+        if (down && IsGrounded() && abilityState == AbilityState.Default) // start crouching
         {
             Crouch();
-
-            velocity += Mathf.Clamp(-velocity.x * inputX + slideSpeed, 0, slideSpeed) * inputX * Vector2.right; // capped impulse boost
         }
 
         bool headRoom = !collideAt(ground, Vector2.up * 6 * pixel); // is there room above my head to uncrouch?
-        if ((!down || !IsGrounded()) && state == State.Slide && headRoom) // stop slide
+        if ((!down || !IsGrounded()) && abilityState == AbilityState.Crouch && headRoom) // stop crouching
         {
-            state = State.Default;
+            abilityState = AbilityState.Default;
         }
 
-        if (state == State.Slide) // sliding
+        if (abilityState == AbilityState.Crouch) // crouching
         {
             spriteScale = Vector2.Lerp(spriteScale, Vector2.one, 0.25f); // return sprite to normal
-            velocity += Mathf.Clamp(-velocity.x * inputX + slideSpeed, 0, slideSpeed * 0.01f) * inputX * Vector2.right; // capped slide boost
+            velocity += Mathf.Clamp(-velocity.x * inputX + crouchSpeed, 0, crouchSpeed * walkAcceleration) * inputX * Vector2.right; // capped crouch movement
         }
     }
 
     void WallSlide() // handles wall slide movement ability
     {
+        if (IsSlidingAgainstWall()) // slide down walls
+        {
+            velocity.y = Mathf.Lerp(velocity.y, 0, 0.5f);
+        } 
+    }
+
+    bool IsSlidingAgainstWall()
+    {
         if (IsGrounded() || !IsTouchingWall())
         {
-            return;
+            return false;
         }
 
         if (velocity.y < 0 && inputX != 0) // slide down walls
         {
-            velocity.y = Mathf.Lerp(velocity.y, 0, 0.25f);
-        } 
+            return true;
+        }
+
+        return false;
     }
 
     void WallJump()
@@ -321,7 +330,7 @@ public class PlayerController : MonoBehaviour
 
     void Crouch() // crouches the player // unused
     {
-        state = State.Slide;
+        abilityState = AbilityState.Crouch;
 
         spriteScale = new Vector2(1.5f, 0.5f); // squish
 
@@ -332,7 +341,7 @@ public class PlayerController : MonoBehaviour
 
     void Walk() // handles walking
     {
-        if (IsGrounded() && state == State.Default)
+        if (IsGrounded() && abilityState == AbilityState.Default)
         {
             velocity += Mathf.Clamp(-velocity.x * inputX + walkSpeed, 0, walkSpeed * walkAcceleration) * inputX * Vector2.right; // capped acceleration
         }
@@ -362,8 +371,13 @@ public class PlayerController : MonoBehaviour
 
     void GroundFriction() // handles ground friction
     {
-        // if ( no x input or x velocity is greater than walk speed ) && grounded && default state
-        if ((inputX == 0 || Mathf.Abs(velocity.x) > walkSpeed) && IsGrounded() && state == State.Default)
+        // if ( no x input or x velocity is greater than walk speed ) && grounded
+        if ((inputX == 0 || Mathf.Abs(velocity.x) > walkSpeed) && IsGrounded() && abilityState == AbilityState.Default)
+        {
+            velocity.x = Mathf.Lerp(velocity.x, 0, 0.25f);
+        }
+
+        if ((inputX == 0 || Mathf.Abs(velocity.x) > crouchSpeed) && IsGrounded() && abilityState == AbilityState.Crouch)
         {
             velocity.x = Mathf.Lerp(velocity.x, 0, 0.25f);
         }
@@ -371,9 +385,9 @@ public class PlayerController : MonoBehaviour
 
     void AirResistance() // handles air resistance
     {
-        // player is trying to resist movement or isnt moving && they havent hit critical airspeed (no resistance) && is in the air && default state
-        // if the input dir doesnt match the velocity dir && horizontal velocity is less than 2.2x the max airspeed && not grounded && default state
-        if ((inputX * Mathf.Sign(velocity.x) <= 0) && (Mathf.Abs(velocity.x) < airSpeed * 2.2f) && !IsGrounded() && (state == State.Default)) // this line is kinda hard to follow, hopefully the 2 explinations help
+        // player is trying to resist movement or isnt moving && they havent hit critical airspeed (no resistance)
+        // if the input dir doesnt match the velocity dir && horizontal velocity is less than 2.2x the max airspeed
+        if ((inputX * Mathf.Sign(velocity.x) <= 0) && (Mathf.Abs(velocity.x) < airSpeed * 2.2f) && !IsGrounded()) // this line is kinda hard to follow, hopefully the 2 explinations help
         {
             velocity.x = Mathf.Lerp(velocity.x, 0, 0.05f);
         }
@@ -389,10 +403,10 @@ public class PlayerController : MonoBehaviour
             GameObject.Destroy(gameObject);
         }*/
 
-/*        if (collideAt(ground, Vector2.zero))
+        if (collideAt(ground, Vector2.zero))
         {
             Crouch();
-        }*/
+        }
     }
 
     void UpdateDirection()
@@ -509,5 +523,20 @@ public class PlayerController : MonoBehaviour
     public void SetInheritedVelocity(Vector2 inheritedVelocity)
     {
         this.inheritedVelocity = inheritedVelocity;
+    }
+
+    void UpdateGraphics()
+    {
+        graphicsState = GraphicsState.Idle;
+
+        if (inputX != 0) { graphicsState = GraphicsState.Walking; }
+        
+        if (!IsGrounded()) { graphicsState = GraphicsState.Jump; }
+
+        if (IsSlidingAgainstWall()) { graphicsState = GraphicsState.WallSlide; }
+
+        if (abilityState == AbilityState.Crouch) { graphicsState = GraphicsState.Crouch; }
+
+        if (abilityState == AbilityState.Crouch && inputX != 0) { graphicsState = GraphicsState.CrouchWalking; }
     }
 }

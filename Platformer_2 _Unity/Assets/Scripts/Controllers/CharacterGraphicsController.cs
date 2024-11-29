@@ -4,44 +4,58 @@ using System.Collections;
 public class CharacterGraphicsController : MonoBehaviour
 {
     private PlayerController m_player;
-    private SpriteRenderer m_spriteRenderer;
+    private SpriteRenderer spriteRenderer;
+    private Animator animator;
 
     public Sprite defualt;
     public Sprite crouched;
     public Sprite wall;
+    public Sprite jump;
 
     // Use this for initialization
     void Start()
     {
         m_player = GetComponent<PlayerController>();
-        m_spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        animator = GetComponentInChildren<Animator>();
     }
 
     // Update is called once per frame
     void Update()
     {
+        // facing
         switch ( m_player.GetFacingDirection() )
         {
             case PlayerController.FacingDirection.Left:
-                m_spriteRenderer.flipX = true;
+                spriteRenderer.flipX = true;
                 break;
             case PlayerController.FacingDirection.Right:
             default:
-                m_spriteRenderer.flipX = false;
+                spriteRenderer.flipX = false;
                 break;
         }
 
-        switch (m_player.GetState())
+        // sprite
+        switch (m_player.GetGraphicsState())
         {
-            case PlayerController.State.Slide:
-                m_spriteRenderer.sprite = crouched;
+            case PlayerController.GraphicsState.Crouch:
+                animator.CrossFade("Crouch Idle",0);
                 break;
-            case PlayerController.State.WallSlide:
-                m_spriteRenderer.sprite = crouched;
+            case PlayerController.GraphicsState.CrouchWalking:
+                animator.CrossFade("Crouch Walk", 0);
                 break;
-            case PlayerController.State.Default:
+            case PlayerController.GraphicsState.Jump:
+                animator.CrossFade("Jump", 0);
+                break;
+            case PlayerController.GraphicsState.WallSlide:
+                animator.CrossFade("Wall Slide", 0);
+                break;
+            case PlayerController.GraphicsState.Walking:
+                animator.CrossFade("Walk", 0);
+                break;
+            case PlayerController.GraphicsState.Idle:
             default:
-                m_spriteRenderer.sprite = defualt;
+                animator.CrossFade("Idle", 0);
                 break;
         }
     }

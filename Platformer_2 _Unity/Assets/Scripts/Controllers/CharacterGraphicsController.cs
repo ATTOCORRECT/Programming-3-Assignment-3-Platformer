@@ -7,11 +7,6 @@ public class CharacterGraphicsController : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Animator animator;
 
-    public Sprite defualt;
-    public Sprite crouched;
-    public Sprite wall;
-    public Sprite jump;
-
     // Use this for initialization
     void Start()
     {
@@ -39,7 +34,7 @@ public class CharacterGraphicsController : MonoBehaviour
         switch (m_player.GetGraphicsState())
         {
             case PlayerController.GraphicsState.Crouch:
-                animator.CrossFade("Crouch Idle",0);
+                animator.CrossFade("Crouch Idle", 0);
                 break;
             case PlayerController.GraphicsState.CrouchWalking:
                 animator.CrossFade("Crouch Walk", 0);

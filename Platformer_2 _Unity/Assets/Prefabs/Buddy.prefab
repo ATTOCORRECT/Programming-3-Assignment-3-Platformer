@@ -326,7 +326,7 @@ MonoBehaviour:
   walkSpeed: 3
   walkAcceleration: 0.1
   crouchSpeed: 1
-  airSpeed: 2
+  airSpeed: 3
   airAcceleration: 0.05
   jumpVelocity: 3
   variableJumpSpeed: 4

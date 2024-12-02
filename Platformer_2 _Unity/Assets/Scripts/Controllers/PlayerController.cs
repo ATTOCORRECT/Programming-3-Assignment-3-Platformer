@@ -18,7 +18,7 @@ public class PlayerController : MonoBehaviour
     public BoxCollider2D collisionBox;
     Vector2 collisionBoxDefaultSize, collisionBoxCrouchedSize, collisionBoxDefaultOffset, collisionBoxCrouchedOffset;
 
-    LayerMask ground;//, semiSolid;
+    LayerMask ground, semiSolid, movingPlatform;
 
     public enum AbilityState { Default, Crouch }
     AbilityState abilityState;
@@ -42,6 +42,8 @@ public class PlayerController : MonoBehaviour
         collisionBoxCrouchedOffset = new Vector2(0, -pixel * 5);
 
         ground = LayerMask.GetMask("Ground");
+        semiSolid = LayerMask.GetMask("Semi Solid");
+        movingPlatform = LayerMask.GetMask("Moving Platform");
 
         velocity = Vector2.zero;
         inheritedVelocity = Vector2.zero;
@@ -62,7 +64,7 @@ public class PlayerController : MonoBehaviour
 
     public bool IsGrounded()
     {
-        return collideAt(ground, Vector2.down);
+        return collideAt(ground, Vector2.down) || (collideAt(semiSolid, new Vector2(0, -pixel)) && !collideAt(semiSolid, Vector2.zero));
     }
 
     public bool IsTouchingWall()
@@ -89,7 +91,7 @@ public class PlayerController : MonoBehaviour
 
     public bool IsRiding(GameObject solid)
     {
-        RaycastHit2D Hit = collideAt(ground, Vector2.down);
+        RaycastHit2D Hit = collideAt(movingPlatform, Vector2.down);
         if (Hit)
         {
             return solid == Hit.collider.gameObject;
@@ -213,20 +215,25 @@ public class PlayerController : MonoBehaviour
 
             while (move * sign > 0)
             {
-                if (!collideAt(ground, new Vector2(0, sign)))
+                if (collideAt(ground, new Vector2(0, sign)))
+                {
+                    // hit ground!
+                    velocity.y = 0;
+                    break;
+                   
+                }
+                else if (sign == -1 && collideAt(semiSolid, new Vector2(0, -pixel)) && !collideAt(semiSolid, Vector2.zero)) //semi solid platform
+                {
+                    // hit semi solid!
+                    velocity.y = 0;
+                    break;
+                } 
+                else
                 {
                     // no ground immediately beside
                     position.y += sign;
                     move -= sign;
                 }
-                else
-                {
-                    // hit ground!
-                    velocity.y = 0;
-                    break;
-                }
-
-                //semi solid platform
             }
         }
         transform.position = position;
@@ -296,7 +303,6 @@ public class PlayerController : MonoBehaviour
     {
         if (IsWallCoyoteGrounded() && !IsGrounded() && BufferedJumpInput()) // wall jump up
         {
-            Debug.Log("Wall Jump");
             wallCoyoteCounter = 0;
 
             spriteScale = new Vector2(0.5f, 1.5f); // stretch
@@ -309,7 +315,6 @@ public class PlayerController : MonoBehaviour
             } 
             else
             {
-                Debug.Log(-wallDirection);
                 velocity.x = walkSpeed * 1 * -wallDirection;
                 SetDirectionFromInt(-wallDirection);
             }
@@ -351,7 +356,6 @@ public class PlayerController : MonoBehaviour
     {
         if (IsCoyoteGrounded() && BufferedJumpInput())
         {
-            Debug.Log("Jump");
             groundCoyoteCounter = 0; // reset coyote time
 
             spriteScale = new Vector2(0.5f, 1.5f); // stretch

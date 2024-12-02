@@ -6,14 +6,18 @@ using UnityEngine.Tilemaps;
 
 public class MovingPlatform : MonoBehaviour
 {
+    
     public Transform endPositionTransform;
 
     public BoxCollider2D collisionBox;
+    public TilemapCollider2D tileCollisionBox;
 
-    public float Speed = 0.5f;
-    public float frequency = 1;
+    [Range(1,20)]
+    public float Speed = 1f;
+    public float CycleTime = 1;
 
     Vector2 startPosition, endPosition, position, currentPosition, lastPosition, velocity, acceleration, remainder;
+    Vector2 boxOffset, boxSize;
 
     List<Vector2> largestRecentVelocity = new List<Vector2>();
 
@@ -34,6 +38,12 @@ public class MovingPlatform : MonoBehaviour
         velocity = Vector2.zero;
         acceleration = Vector2.zero;
 
+        boxOffset = tileCollisionBox.bounds.center - transform.position;
+        boxSize = tileCollisionBox.bounds.size;
+
+        collisionBox.offset = boxOffset;
+        collisionBox.size = boxSize;
+
         player = GameObject.Find("Buddy");
         playerController = player.GetComponent<PlayerController>();
         playerCollisionBox = player.GetComponentInChildren<BoxCollider2D>();
@@ -45,7 +55,7 @@ public class MovingPlatform : MonoBehaviour
     {
         lastPosition = currentPosition;
 
-        float t = Mathf.Clamp01(Mathf.Sin(cycle * 2 * Mathf.PI) * Speed + 0.5f);
+        float t = Mathf.Clamp01(Mathf.Sin(cycle * 2 * Mathf.PI) * Speed/2 + 0.5f);
         currentPosition = Vector2.Lerp(startPosition, endPosition, t);
 
         velocity = currentPosition - lastPosition;
@@ -64,17 +74,17 @@ public class MovingPlatform : MonoBehaviour
 
         Move(velocity.x, velocity.y);
 
-        cycle += 0.05f * frequency;
+        cycle += 0.5f * (1/CycleTime) * Time.fixedDeltaTime;
         cycle %= 1;
     }
 
     RaycastHit2D collideAt(LayerMask layermask, Vector2 offset)
     {
-        Vector2 rayOrigin = position + collisionBox.offset;
+        Vector2 rayOrigin = position + boxOffset;
         Vector2 rayDirection = offset;
         float rayDistance = offset.magnitude;
 
-        RaycastHit2D hit = Physics2D.BoxCast(rayOrigin, collisionBox.size - Vector2.one, 0, rayDirection, rayDistance, layermask);
+        RaycastHit2D hit = Physics2D.BoxCast(rayOrigin, boxSize - Vector2.one, 0, rayDirection, rayDistance, layermask);
 
         Debug.DrawRay(rayOrigin, rayDirection.normalized * rayDistance, Color.red);
         return hit;
@@ -90,7 +100,8 @@ public class MovingPlatform : MonoBehaviour
         if (moveX != 0 || moveY != 0)
         {
             bool isBeingRidden = IsBeingRidden();
-            collisionBox.enabled = false;
+
+            tileCollisionBox.enabled = false;
 
             if (moveX != 0)
             {
@@ -102,7 +113,7 @@ public class MovingPlatform : MonoBehaviour
                 if (collideAt(playerlayer, new Vector2(-moveX,0)))
                 {
                     // Push
-                    int platformEdgeX = (int)(position.x + collisionBox.size.x / 2 * signX + collisionBox.offset.x); // the left or right edge of the platform
+                    int platformEdgeX = (int)(position.x + boxSize.x / 2 * signX + boxOffset.x); // the left or right edge of the platform
                     int playerEdgeX = (int)(playerController.position.x - playerCollisionBox.size.x / 2 * signX + playerCollisionBox.offset.x); // the left or right edge of the player
                     int pushX = platformEdgeX - playerEdgeX;
                     playerController.MoveX(pushX);
@@ -124,7 +135,7 @@ public class MovingPlatform : MonoBehaviour
                 if (collideAt(playerlayer, new Vector2(0, -moveY)))
                 {
                     // Push
-                    int platformEdgeY = (int)(position.y + collisionBox.size.y / 2 * signY + collisionBox.offset.y); // the top or bottom edge of the platform
+                    int platformEdgeY = (int)(position.y + boxSize.y / 2 * signY + boxOffset.y); // the top or bottom edge of the platform
                     int playerEdgeY = (int)(playerController.position.y - playerCollisionBox.size.y / 2 * signY + playerCollisionBox.offset.y); // the top or bottom edge of the player
                     int pushY = (platformEdgeY - playerEdgeY);
                     playerController.MoveY(pushY);
@@ -136,7 +147,7 @@ public class MovingPlatform : MonoBehaviour
                 }
             }
 
-            collisionBox.enabled = true;
+            tileCollisionBox.enabled = true;
         }
         transform.position = position;
     }

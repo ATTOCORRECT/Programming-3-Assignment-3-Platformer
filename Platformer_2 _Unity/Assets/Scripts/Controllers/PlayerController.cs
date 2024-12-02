@@ -183,7 +183,7 @@ public class PlayerController : MonoBehaviour
             int sign = (int)Mathf.Sign(move);
 
             {
-                while (move * sign > 0)
+                while (Mathf.Abs(move) > 0)
                 {
                     if(!collideAt(ground, new Vector2(sign, 0)))
                     {
@@ -213,7 +213,7 @@ public class PlayerController : MonoBehaviour
             remainder.y -= move;
             int sign = (int)Mathf.Sign(move);
 
-            while (move * sign > 0)
+            while (Mathf.Abs(move) > 0)
             {
                 if (collideAt(ground, new Vector2(0, sign)))
                 {
